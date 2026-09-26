@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Banner from '../components/Banner.astro';
+import PostCard from '../components/PostCard.astro';
+import Pagination from '../components/Pagination.astro';
+import { getSortedPosts } from '../utils/posts';
+
+const POSTS_PER_PAGE = 8;
+
+const posts = await getSortedPosts();
+const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
+const pagePosts = posts.slice(0, POSTS_PER_PAGE);
+---
+
+<BaseLayout>
+  <div class="flex flex-col gap-5">
+    <Banner />
+    <h2 class="card px-5 py-3.5 text-lg font-bold">
+      ✧ 最近的文章
+      <span class="ml-1.5 text-sm font-normal text-muted"
+        >（共 {posts.length} 篇）</span
+      >
+    </h2>
+    {pagePosts.map((post) => <PostCard post={post} />)}
+    <Pagination current={1} total={totalPages} />
+  </div>
+</BaseLayout>

@@ -1,0 +1,74 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import { siteConfig } from '../config';
+---
+
+<BaseLayout title="关于我" description={`${siteConfig.author} 的自我介绍页面`}>
+  <div class="flex flex-col gap-5">
+    <!-- 个人资料卡 -->
+    <section class="card overflow-hidden">
+      <div class="h-24 bg-linear-120 from-primary to-accent"></div>
+      <div class="-mt-12 px-6 pb-6 sm:px-8 sm:pb-8">
+        <img
+          src={siteConfig.avatar}
+          alt="头像"
+          class="size-24 rounded-full border-4 border-card bg-card shadow-card"
+          width="96"
+          height="96"
+        />
+        <h1 class="mt-3 text-2xl font-bold">{siteConfig.author}</h1>
+        <p class="mt-1 text-muted">{siteConfig.subtitle}</p>
+        <div class="mt-3 flex flex-wrap gap-1.5">
+          {
+            siteConfig.social.map((s) => (
+              <a href={s.url} class="chip" target={s.url.startsWith('/') ? undefined : '_blank'} rel="noopener noreferrer">
+                <Icon name={s.icon} class="size-3.5" />
+                {s.name}
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- 介绍正文（改成你自己的故事吧！） -->
+    <article class="card p-6 sm:p-8">
+      <div class="prose-anime">
+        <h2>你好，这里是星梦 ✦</h2>
+        <p>
+          一名白天写代码、晚上追番的普通人类。喜欢的颜色是紫色，喜欢的季节是樱花季，
+          喜欢的动画类型是「看完之后心里空落落的那种」。
+        </p>
+        <p>
+          这个小站是我的数字花园：技术笔记、追番碎碎念、偶尔的一些奇怪想法都会种在这里。
+          如果哪一篇文章恰好帮到了你，那就是它最开心的时刻 🌸
+        </p>
+
+        <h2>技能点</h2>
+        <ul>
+          <li><strong>前端</strong>：TypeScript / Vue / Astro， CSS 美学爱好者</li>
+          <li><strong>后端</strong>：Node.js 一把梭，数据库勉强能养活</li>
+          <li><strong>设计</strong>：只会一点 Figma，但审美在线（自认为）</li>
+          <li><strong>其他</strong>：给猫拍一万张照片、把动漫周边摆满书架</li>
+        </ul>
+
+        <h2>最近在做什么</h2>
+        <ul>
+          <li>🏸 每周打两次羽毛球（输多赢少）</li>
+          <li>📚 在啃《图解 TCP/IP》和一本很厚的小说</li>
+          <li>🎹 在学《打上花火》的钢琴改编版，进度 30%</li>
+        </ul>
+
+        <h2>联系我</h2>
+        <p>
+          邮箱 <code>hi@example.com</code>，或者去 <a href="/friends">友链页</a>
+          逛逛我朋友们的星球。对于交流、约稿、吹水都欢迎！
+        </p>
+        <blockquote>
+          <p>「愿你我都能在自己的小宇宙里，安然发光。」✨</p>
+        </blockquote>
+      </div>
+    </article>
+  </div>
+</BaseLayout>

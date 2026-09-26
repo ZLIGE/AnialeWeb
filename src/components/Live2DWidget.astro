@@ -1,0 +1,271 @@
+---
+/**
+ * Live2D 看板娘（oh-my-live2d 驱动，配置见 src/config.ts）。
+ * - 动态 import 隔离加载：组件库或模型加载失败时仅打印警告，不影响站点
+ * - 移动端默认不展示（mobileDisplay: false）
+ * - 长按模型约 0.3 秒后可拖动改变位置，松手后记忆到 localStorage，
+ *   刷新后保持；组件在模型加载/切换时会重写停靠样式，这里会自动恢复
+ */
+---
+
+<script>
+  import { siteConfig } from '../config';
+
+  const POS_KEY = 'oml2d-drag-pos';
+  const LONG_PRESS_MS = 300;
+  /** 长按生效前移动超过该距离视为普通点击/滑动，取消拖动意图 */
+  const MOVE_CANCEL_PX = 8;
+
+  interface SavedPos {
+    stage: [number, number];
+    status: [number, number];
+  }
+
+  const clamp = (v: number, min: number, max: number) =>
+    Math.min(Math.max(v, min), max);
+
+  const readSaved = (): SavedPos | null => {
+    try {
+      const raw = localStorage.getItem(POS_KEY);
+      if (!raw) return null;
+      const p = JSON.parse(raw);
+      return Array.isArray(p?.stage) && Array.isArray(p?.status) ? p : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const save = (p: SavedPos) => {
+    try {
+      localStorage.setItem(POS_KEY, JSON.stringify(p));
+    } catch {
+      /* 隐私模式下忽略 */
+    }
+  };
+
+  /**
+   * 把元素从停靠定位（right/bottom）切换到 left/top 绝对定位。
+   * transform 固定为 translate(0,0)：既保持可见，又把滑入/滑出的
+   * 控制权交还给组件（组件后续会直接覆盖内联 transform）。
+   * transition 先禁用避免定位变化产生滑动动画，下一帧再还原。
+   */
+  const pinTo = (el: HTMLElement, left: number, top: number) => {
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+    el.style.right = 'auto';
+    el.style.bottom = 'auto';
+    el.style.transition = 'none';
+    el.style.animation = 'none';
+    el.style.transform = 'translate(0, 0)';
+    requestAnimationFrame(() => {
+      el.style.transition = '';
+    });
+  };
+
+  const applySaved = (p: SavedPos) => {
+    const stage = document.getElementById('oml2d-stage');
+    const statusBar = document.getElementById('oml2d-statusBar');
+    if (!stage) return;
+    const left = clamp(p.stage[0], 0, window.innerWidth - stage.offsetWidth);
+    const top = clamp(p.stage[1], 0, window.innerHeight - stage.offsetHeight);
+    pinTo(stage, left, top);
+    if (statusBar) {
+      const sl = clamp(
+        p.status[0],
+        8,
+        window.innerWidth - statusBar.offsetWidth - 8
+      );
+      const st = clamp(
+        p.status[1],
+        8,
+        window.innerHeight - statusBar.offsetHeight - 8
+      );
+      pinTo(statusBar, sl, st);
+    }
+  };
+
+  const setupDragging = () => {
+    const stage = document.getElementById('oml2d-stage');
+    const statusBar = document.getElementById('oml2d-statusBar');
+    const canvas = stage?.querySelector('canvas');
+    if (!stage || !canvas) return;
+
+    let pressing = false;
+    let dragMode = false;
+    let pressTimer = 0;
+    let pointerId = -1;
+    let startX = 0;
+    let startY = 0;
+    let startRects: { stage: DOMRect; status: DOMRect | null } | null = null;
+
+    const cancelPress = () => {
+      pressing = false;
+      dragMode = false;
+      clearTimeout(pressTimer);
+    };
+
+    // ── 位置记忆的恢复 ────────────────────────────────────────
+    // 组件在模型加载成功 / 切换模型时会调用 reloadStyle 重写停靠样式
+    // （right:0 等），覆盖记忆的位置。监听 style 变化，被覆盖时恢复；
+    // 位置一致时不写入，避免观察器死循环；拖动期间跳过。
+    const savedPos = readSaved();
+    if (savedPos) {
+      const restoreIfOverridden = () => {
+        if (pressing || dragMode) return;
+        const wantLeft = `${clamp(
+          savedPos.stage[0],
+          0,
+          window.innerWidth - stage.offsetWidth
+        )}px`;
+        const wantTop = `${clamp(
+          savedPos.stage[1],
+          0,
+          window.innerHeight - stage.offsetHeight
+        )}px`;
+        if (stage.style.left !== wantLeft || stage.style.top !== wantTop) {
+          applySaved(savedPos);
+        }
+      };
+      new MutationObserver(restoreIfOverridden).observe(stage, {
+        attributes: true,
+        attributeFilter: ['style'],
+      });
+      applySaved(savedPos);
+    }
+
+    // ── 长按拖动 ──────────────────────────────────────────────
+    const enterDrag = () => {
+      if (!pressing) return;
+      dragMode = true;
+      startRects = {
+        stage: stage.getBoundingClientRect(),
+        status: statusBar?.getBoundingClientRect() ?? null,
+      };
+      pinTo(stage, startRects.stage.left, startRects.stage.top);
+      if (statusBar && startRects.status) {
+        pinTo(statusBar, startRects.status.left, startRects.status.top);
+      }
+      canvas.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
+      try {
+        stage.setPointerCapture(pointerId);
+      } catch {
+        /* 合成事件或指针已释放时忽略 */
+      }
+    };
+
+    stage.addEventListener('pointerdown', (e: PointerEvent) => {
+      // 只允许按住模型画布本体发起拖动，菜单/提示框的交互不受影响
+      if (e.target !== canvas) return;
+      pressing = true;
+      dragMode = false;
+      pointerId = e.pointerId;
+      startX = e.clientX;
+      startY = e.clientY;
+      pressTimer = window.setTimeout(enterDrag, LONG_PRESS_MS);
+    });
+
+    window.addEventListener(
+      'pointermove',
+      (e: PointerEvent) => {
+        if (!pressing) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (!dragMode) {
+          // 长按生效前就明显移动 → 是普通滑动/点击，取消拖动意图
+          if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) cancelPress();
+          return;
+        }
+        if (!startRects) return;
+        e.preventDefault();
+        const left = clamp(
+          startRects.stage.left + dx,
+          0,
+          window.innerWidth - stage.offsetWidth
+        );
+        const top = clamp(
+          startRects.stage.top + dy,
+          0,
+          window.innerHeight - stage.offsetHeight
+        );
+        stage.style.left = `${left}px`;
+        stage.style.top = `${top}px`;
+        if (statusBar && startRects.status) {
+          const sl = clamp(
+            startRects.status.left + dx,
+            8,
+            window.innerWidth - statusBar.offsetWidth - 8
+          );
+          const st = clamp(
+            startRects.status.top + dy,
+            8,
+            window.innerHeight - statusBar.offsetHeight - 8
+          );
+          statusBar.style.left = `${sl}px`;
+          statusBar.style.top = `${st}px`;
+        }
+      },
+      { passive: false }
+    );
+
+    window.addEventListener(
+      'pointerup',
+      (e) => {
+        if (!pressing) return;
+        const wasDrag = dragMode;
+        cancelPress();
+        canvas.style.cursor = '';
+        document.body.style.userSelect = '';
+        if (!wasDrag || !startRects) return;
+        // 拦截拖动结束事件，避免模型把这次按压当成触摸互动
+        e.preventDefault();
+        e.stopPropagation();
+        const saved: SavedPos = {
+          stage: [
+            parseFloat(stage.style.left) || 0,
+            parseFloat(stage.style.top) || 0,
+          ],
+          status: statusBar
+            ? [
+                parseFloat(statusBar.style.left) || 0,
+                parseFloat(statusBar.style.top) || 0,
+              ]
+            : [0, 0],
+        };
+        save(saved);
+      },
+      true
+    );
+
+    window.addEventListener('pointercancel', cancelPress);
+  };
+
+  // 组件异步挂载，轮询等待 stage 出现（最多约 10 秒）
+  let tries = 0;
+  const timer = window.setInterval(() => {
+    tries++;
+    const stage = document.getElementById('oml2d-stage');
+    if (stage) {
+      window.clearInterval(timer);
+      setupDragging();
+    } else if (tries > 50) {
+      window.clearInterval(timer);
+    }
+  }, 200);
+
+  import('oh-my-live2d')
+    .then(({ loadOml2d }) => {
+      loadOml2d({
+        dockedPosition: siteConfig.live2d.dockedPosition,
+        primaryColor: siteConfig.live2d.primaryColor,
+        models: siteConfig.live2d.models,
+        mobileDisplay: false,
+        transitionTime: 800,
+        // 默认「关于」菜单项会 window.open 到 oml2d.com（该域名已易主为垃圾站），过滤掉
+        menus: {
+          items: (defaultItems) => defaultItems.filter((item) => item.id !== 'About'),
+        },
+      });
+    })
+    .catch((err) => console.warn('[Live2D] 看板娘加载失败，已自动跳过：', err));
+</script>

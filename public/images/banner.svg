@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 640" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#241a4f"/>
+      <stop offset="0.38" stop-color="#4c3a86"/>
+      <stop offset="0.68" stop-color="#8f6cc0"/>
+      <stop offset="0.88" stop-color="#cf9bd4"/>
+      <stop offset="1" stop-color="#f5c2dc"/>
+    </linearGradient>
+    <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff6e0" stop-opacity="0.55"/>
+      <stop offset="0.5" stop-color="#ffedc9" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ffedc9" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="moon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fffdf4"/>
+      <stop offset="1" stop-color="#ffe8bd"/>
+    </linearGradient>
+    <linearGradient id="hillA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a4390"/>
+      <stop offset="1" stop-color="#41306f"/>
+    </linearGradient>
+    <linearGradient id="hillB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#332558"/>
+      <stop offset="1" stop-color="#241a45"/>
+    </linearGradient>
+    <mask id="crescent">
+      <circle cx="1210" cy="175" r="86" fill="#fff"/>
+      <circle cx="1252" cy="148" r="78" fill="#000"/>
+    </mask>
+    <g id="flower">
+      <circle cx="0" cy="-9" r="6.5" fill="#f9c7e2"/>
+      <circle cx="8.6" cy="-2.8" r="6.5" fill="#f9c7e2"/>
+      <circle cx="5.3" cy="7.3" r="6.5" fill="#f6b8d9"/>
+      <circle cx="-5.3" cy="7.3" r="6.5" fill="#f6b8d9"/>
+      <circle cx="-8.6" cy="-2.8" r="6.5" fill="#f9c7e2"/>
+      <circle cx="0" cy="0" r="3" fill="#ffe9a6"/>
+    </g>
+    <g id="petal">
+      <path d="M0 6 C 5 3 5.5 -3 1.5 -6.5 L0 -4 L-1.5 -6.5 C -5.5 -3 -5 3 0 6 Z" fill="#f7c3de" opacity="0.85"/>
+    </g>
+  </defs>
+
+  <!-- 夜空 -->
+  <rect width="1600" height="640" fill="url(#sky)"/>
+
+  <!-- 星星 -->
+  <g fill="#fff">
+    <circle cx="120" cy="90" r="2.4" opacity="0.95"/>
+    <circle cx="260" cy="170" r="1.6" opacity="0.7"/>
+    <circle cx="340" cy="60" r="2" opacity="0.85"/>
+    <circle cx="450" cy="130" r="1.4" opacity="0.6"/>
+    <circle cx="540" cy="42" r="2.2" opacity="0.9"/>
+    <circle cx="640" cy="110" r="1.5" opacity="0.65"/>
+    <circle cx="720" cy="58" r="1.8" opacity="0.8"/>
+    <circle cx="830" cy="150" r="1.4" opacity="0.6"/>
+    <circle cx="920" cy="70" r="2.1" opacity="0.85"/>
+    <circle cx="1020" cy="120" r="1.5" opacity="0.6"/>
+    <circle cx="1420" cy="80" r="1.8" opacity="0.8"/>
+    <circle cx="1520" cy="150" r="1.5" opacity="0.65"/>
+    <circle cx="1470" cy="300" r="1.4" opacity="0.5"/>
+    <circle cx="180" cy="260" r="1.5" opacity="0.5"/>
+    <circle cx="90" cy="330" r="1.6" opacity="0.45"/>
+    <circle cx="600" cy="230" r="1.5" opacity="0.5"/>
+    <circle cx="760" cy="280" r="1.3" opacity="0.4"/>
+    <circle cx="1080" cy="330" r="1.4" opacity="0.4"/>
+    <circle cx="60" cy="180" r="1.8" opacity="0.7"/>
+    <circle cx="1350" cy="210" r="1.5" opacity="0.6"/>
+  </g>
+
+  <!-- 四芒星光 -->
+  <g fill="#fff">
+    <path d="M400 84 L404 96 L416 100 L404 104 L400 116 L396 104 L384 100 L396 96 Z" opacity="0.95"/>
+    <path d="M960 44 L963.5 54 L973.5 57.5 L963.5 61 L960 71 L956.5 61 L946.5 57.5 L956.5 54 Z" opacity="0.9"/>
+    <path d="M130 240 L133 249 L142 252 L133 255 L130 264 L127 255 L118 252 L127 249 Z" opacity="0.8"/>
+    <path d="M1530 60 L1533 69 L1542 72 L1533 75 L1530 84 L1527 75 L1518 72 L1527 69 Z" opacity="0.85"/>
+    <path d="M690 190 L692.5 197 L699.5 199.5 L692.5 202 L690 209 L687.5 202 L680.5 199.5 L687.5 197 Z" opacity="0.7"/>
+  </g>
+
+  <!-- 流星 -->
+  <line x1="820" y1="30" x2="940" y2="72" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+  <line x1="905" y1="55" x2="940" y2="72" stroke="#ffd9ec" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- 月亮 -->
+  <circle cx="1210" cy="175" r="210" fill="url(#moonGlow)"/>
+  <circle cx="1210" cy="175" r="86" fill="url(#moon)" mask="url(#crescent)"/>
+
+  <!-- 云 -->
+  <g fill="#ffffff">
+    <ellipse cx="300" cy="360" rx="180" ry="26" opacity="0.10"/>
+    <ellipse cx="420" cy="345" rx="120" ry="20" opacity="0.08"/>
+    <ellipse cx="950" cy="300" rx="150" ry="22" opacity="0.10"/>
+    <ellipse cx="1060" cy="286" rx="90" ry="16" opacity="0.08"/>
+    <ellipse cx="1340" cy="420" rx="170" ry="24" opacity="0.10"/>
+  </g>
+
+  <!-- 远山 -->
+  <path d="M0 520 Q 160 440 340 490 Q 480 528 620 505 Q 800 476 980 512 Q 1160 546 1330 505 Q 1470 472 1600 505 L 1600 640 L 0 640 Z" fill="url(#hillA)" opacity="0.92"/>
+  <path d="M0 574 Q 220 512 430 556 Q 640 598 840 566 Q 1060 532 1280 572 Q 1440 600 1600 570 L 1600 640 L 0 640 Z" fill="url(#hillB)"/>
+
+  <!-- 前景草地 -->
+  <path d="M0 616 Q 400 588 800 610 Q 1200 630 1600 604 L 1600 640 L 0 640 Z" fill="#1d1538"/>
+
+  <!-- 樱花枝（左上角） -->
+  <g>
+    <path d="M-10 60 Q 120 90 210 160 Q 280 214 300 300" stroke="#3a2a52" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <path d="M120 92 Q 190 80 250 40" stroke="#3a2a52" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M210 160 Q 270 150 330 168" stroke="#3a2a52" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <use href="#flower" transform="translate(300 308) scale(1.5)"/>
+    <use href="#flower" transform="translate(230 215) scale(1.15)"/>
+    <use href="#flower" transform="translate(196 150)"/>
+    <use href="#flower" transform="translate(255 42) scale(1.3)"/>
+    <use href="#flower" transform="translate(140 88) scale(0.9)"/>
+    <use href="#flower" transform="translate(330 170) scale(1.1)"/>
+    <use href="#flower" transform="translate(60 70) scale(1.2)"/>
+    <use href="#flower" transform="translate(170 240) scale(0.95)"/>
+  </g>
+
+  <!-- 飘落的花瓣 -->
+  <g>
+    <use href="#petal" transform="translate(480 250) rotate(30)"/>
+    <use href="#petal" transform="translate(560 380) rotate(-40) scale(1.2)"/>
+    <use href="#petal" transform="translate(420 470) rotate(70)"/>
+    <use href="#petal" transform="translate(700 200) rotate(-15) scale(0.9)"/>
+    <use href="#petal" transform="translate(760 420) rotate(50) scale(1.1)"/>
+    <use href="#petal" transform="translate(880 330) rotate(-60)"/>
+    <use href="#petal" transform="translate(980 480) rotate(20) scale(1.3)"/>
+    <use href="#petal" transform="translate(1080 250) rotate(-30) scale(0.8)"/>
+    <use href="#petal" transform="translate(1180 420) rotate(65) scale(1.1)"/>
+    <use href="#petal" transform="translate(1300 320) rotate(-45) scale(0.9)"/>
+    <use href="#petal" transform="translate(1430 460) rotate(15) scale(1.2)"/>
+    <use href="#petal" transform="translate(1500 240) rotate(-70)"/>
+    <use href="#petal" transform="translate(620 120) rotate(40) scale(0.9)"/>
+    <use href="#petal" transform="translate(1250 130) rotate(80) scale(0.85)"/>
+  </g>
+</svg>

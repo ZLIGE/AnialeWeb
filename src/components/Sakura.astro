@@ -1,0 +1,135 @@
+---
+/**
+ * 樱花飘落特效：全屏 Canvas，花瓣用贝塞尔曲线绘制（带樱瓣缺刻）。
+ * 动画基于时间增量（dt）驱动，不同刷新率下速度一致；
+ * 尊重系统「减少动态效果」设置；标签页隐藏时自动暂停。
+ */
+---
+
+<canvas
+  id="sakura-canvas"
+  class="pointer-events-none fixed inset-0 z-[60] hidden"
+  aria-hidden="true"
+>
+</canvas>
+
+<script>
+  const canvas = document.getElementById(
+    'sakura-canvas'
+  ) as HTMLCanvasElement | null;
+
+  if (canvas && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      interface Petal {
+        x: number;
+        y: number;
+        size: number;
+        angle: number;
+        /** 自转角速度 rad/s */
+        angleVel: number;
+        /** 下落速度 px/ms（约 20~48 px/s，缓缓飘落） */
+        speedY: number;
+        /** 水平摆幅 px */
+        swayAmp: number;
+        /** 摆动角速度 rad/s（约 0.5~1.2，一个来回 5~12 秒） */
+        swaySpeed: number;
+        phase: number;
+        opacity: number;
+        hue: number;
+      }
+
+      let petals: Petal[] = [];
+      let width = 0;
+      let height = 0;
+      let rafId = 0;
+      let running = false;
+      let lastTime = 0;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      const spawn = (staggered: boolean): Petal => ({
+        x: Math.random() * width,
+        y: staggered ? Math.random() * height : -30 - Math.random() * 60,
+        size: 6 + Math.random() * 8,
+        angle: Math.random() * Math.PI * 2,
+        angleVel: (Math.random() - 0.5) * 0.5,
+        speedY: 0.02 + Math.random() * 0.028,
+        swayAmp: 12 + Math.random() * 16,
+        swaySpeed: 0.5 + Math.random() * 0.7,
+        phase: Math.random() * Math.PI * 2,
+        opacity: 0.4 + Math.random() * 0.4,
+        hue: 330 + Math.random() * 18,
+      });
+
+      const resize = () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas!.width = width * dpr;
+        canvas!.height = height * dpr;
+        canvas!.style.width = `${width}px`;
+        canvas!.style.height = `${height}px`;
+        ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const count = Math.min(26, Math.max(10, Math.floor(width / 55)));
+        petals = Array.from({ length: count }, () => spawn(true));
+      };
+
+      // 樱花瓣：泪滴形 + 顶端 V 形缺刻
+      const drawPetal = (p: Petal) => {
+        const s = p.size;
+        const sway = Math.sin(p.phase) * p.swayAmp;
+        ctx!.save();
+        ctx!.translate(p.x + sway, p.y);
+        ctx!.rotate(p.angle + Math.sin(p.phase * 0.7) * 0.22);
+        ctx!.scale(1, 0.9 + Math.sin(p.phase * 0.7) * 0.08);
+        ctx!.beginPath();
+        ctx!.moveTo(0, s * 0.6);
+        ctx!.bezierCurveTo(s * 0.7, s * 0.35, s * 0.55, -s * 0.45, s * 0.12, -s * 0.55);
+        ctx!.lineTo(0, -s * 0.36);
+        ctx!.lineTo(-s * 0.12, -s * 0.55);
+        ctx!.bezierCurveTo(-s * 0.55, -s * 0.45, -s * 0.7, s * 0.35, 0, s * 0.6);
+        ctx!.closePath();
+        ctx!.fillStyle = `hsla(${p.hue}, 85%, 82%, ${p.opacity})`;
+        ctx!.fill();
+        ctx!.restore();
+      };
+
+      const step = (now: number) => {
+        if (!running) return;
+        // 上限 48ms：切回标签页或偶发掉帧时不产生跳变
+        const dt = Math.min(now - lastTime, 48);
+        lastTime = now;
+        ctx!.clearRect(0, 0, width, height);
+        for (const p of petals) {
+          p.y += p.speedY * dt;
+          p.phase += (p.swaySpeed * dt) / 1000;
+          p.angle += (p.angleVel * dt) / 1000;
+          if (p.y > height + 30) {
+            Object.assign(p, spawn(false));
+          }
+          drawPetal(p);
+        }
+        rafId = requestAnimationFrame(step);
+      };
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          running = false;
+          cancelAnimationFrame(rafId);
+        } else if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          running = false;
+        } else {
+          running = true;
+          lastTime = performance.now();
+          rafId = requestAnimationFrame(step);
+        }
+      });
+
+      window.addEventListener('resize', resize);
+      resize();
+      canvas!.classList.remove('hidden');
+      running = true;
+      lastTime = performance.now();
+      rafId = requestAnimationFrame(step);
+    }
+  }
+</script>

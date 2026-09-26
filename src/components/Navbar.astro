@@ -1,0 +1,94 @@
+---
+/**
+ * 移动端顶部栏（lg 以下显示）：站点名 + 主题切换 + 汉堡菜单抽屉
+ */
+import { siteConfig } from '../config';
+import Icon from './Icon.astro';
+import ThemeToggle from './ThemeToggle.astro';
+
+const { title, nav } = siteConfig;
+const current = Astro.url.pathname.replace(/\/$/, '') || '/';
+const isActive = (link: string) =>
+  link === '/' ? current === '/' : current.startsWith(link);
+---
+
+<header
+  class="card-glass fixed inset-x-0 top-0 z-40 border-b border-line lg:hidden"
+>
+  <div class="flex h-14 items-center justify-between px-4">
+    <a href="/" class="flex items-center gap-2.5">
+      <img
+        src={siteConfig.avatar}
+        alt="头像"
+        class="size-8 rounded-full border border-line"
+      />
+      <span class="text-gradient font-bold">{title}</span>
+    </a>
+    <div class="flex items-center gap-1">
+      <ThemeToggle />
+      <button
+        id="menu-open"
+        class="flex size-9 items-center justify-center rounded-full text-muted hover:bg-primary/10 hover:text-primary"
+        aria-label="打开菜单"
+      >
+        <Icon name="menu" class="size-5" />
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- 抽屉菜单 -->
+<div id="menu-drawer" class="fixed inset-0 z-50 hidden lg:hidden">
+  <div
+    id="menu-mask"
+    class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+  >
+  </div>
+  <nav
+    class="card absolute right-3 top-3 w-64 p-3 shadow-lift"
+    aria-label="站点导航"
+  >
+    <div class="mb-2 flex items-center justify-between px-2 pt-1">
+      <span class="text-sm font-bold text-muted">✧ 导航</span>
+      <button
+        id="menu-close"
+        class="flex size-8 items-center justify-center rounded-full text-muted hover:bg-primary/10 hover:text-primary"
+        aria-label="关闭菜单"
+      >
+        <Icon name="x" class="size-4.5" />
+      </button>
+    </div>
+    <ul class="flex flex-col gap-1">
+      {
+        nav.map((item) => (
+          <li>
+            <a
+              href={item.link}
+              class:list={[
+                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                isActive(item.link)
+                  ? 'bg-primary/15 text-primary'
+                  : 'text-muted hover:bg-primary/10 hover:text-primary',
+              ]}
+            >
+              <Icon name={item.icon} class="size-4.5" />
+              {item.text}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</div>
+
+<script>
+  const drawer = document.getElementById('menu-drawer');
+  const open = () => drawer?.classList.remove('hidden');
+  const close = () => drawer?.classList.add('hidden');
+  document.getElementById('menu-open')?.addEventListener('click', open);
+  document.getElementById('menu-close')?.addEventListener('click', close);
+  document.getElementById('menu-mask')?.addEventListener('click', close);
+  drawer
+    ?.querySelectorAll('a')
+    .forEach((a) => a.addEventListener('click', close));
+</script>

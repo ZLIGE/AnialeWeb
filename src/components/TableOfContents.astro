@@ -1,0 +1,102 @@
+---
+/**
+ * 文章目录：sticky 侧栏变体（xl 以上）+ 折叠卡片变体（xl 以下）
+ * 高亮由 IntersectionObserver 驱动，滚动到对应标题时点亮。
+ */
+import Icon from './Icon.astro';
+
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings: Heading[];
+  variant?: 'sticky' | 'collapse';
+}
+
+const { headings, variant = 'sticky' } = Astro.props;
+const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
+---
+
+{
+  variant === 'sticky' ? (
+    <nav class="card p-5" aria-label="文章目录">
+      <h3 class="mb-3 flex items-center gap-2 text-sm font-bold text-muted">
+        <Icon name="list" class="size-4" /> 目录
+      </h3>
+      <ul class="flex flex-col gap-1 border-l border-line text-sm">
+        {toc.map((h) => (
+          <li>
+            <a
+              href={`#${h.slug}`}
+              data-toc-link
+              class:list={[
+                '-ml-px block border-l-2 border-transparent py-1 text-muted transition-colors hover:text-primary',
+                h.depth === 2 ? 'pl-4' : 'pl-8 text-[0.82rem]',
+              ]}
+            >
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  ) : (
+    <details class="card group px-5 py-4">
+      <summary class="flex cursor-pointer list-none items-center gap-2 text-sm font-bold text-muted">
+        <Icon name="list" class="size-4" />
+        目录（点击展开）
+        <span class="ml-auto transition-transform group-open:rotate-180">⌄</span>
+      </summary>
+      <ul class="mt-3 flex flex-col gap-1 border-l border-line text-sm">
+        {toc.map((h) => (
+          <li>
+            <a
+              href={`#${h.slug}`}
+              class:list={[
+                '-ml-px block border-l-2 border-transparent py-1 text-muted transition-colors hover:text-primary',
+                h.depth === 2 ? 'pl-4' : 'pl-8 text-[0.82rem]',
+              ]}
+            >
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </details>
+  )
+}
+
+<style is:global>
+  a[data-toc-link].toc-active {
+    color: var(--pr);
+    border-left-color: var(--pr);
+    font-weight: 700;
+  }
+</style>
+
+<script>
+  const links = document.querySelectorAll<HTMLAnchorElement>('a[data-toc-link]');
+  if (links.length > 0) {
+    const byId = new Map<string, HTMLAnchorElement>();
+    links.forEach((l) =>
+      byId.set(decodeURIComponent(l.hash.slice(1)), l)
+    );
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            links.forEach((l) => l.classList.remove('toc-active'));
+            byId.get(entry.target.id)?.classList.add('toc-active');
+          }
+        }
+      },
+      { rootMargin: '-80px 0px -72% 0px', threshold: 0 }
+    );
+    document
+      .querySelectorAll('.prose-anime h2[id], .prose-anime h3[id]')
+      .forEach((h) => observer.observe(h));
+  }
+</script>

@@ -1,0 +1,75 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import { friends } from '../data/friends';
+import { siteConfig } from '../config';
+
+/** 友链占位头像：取名字首字符 + 渐变底 */
+const initialOf = (name: string) => [...name][0] ?? '❀';
+---
+
+<BaseLayout title="友情链接" description="朋友们的小星球">
+  <div class="flex flex-col gap-5">
+    <h1 class="card px-5 py-3.5 text-lg font-bold">
+      ✧ 友情链接
+      <span class="ml-1.5 text-sm font-normal text-muted"
+        >（{friends.length} 颗星球）</span
+      >
+    </h1>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      {
+        friends.map((f) => (
+          <a
+            href={f.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="card lift group flex items-center gap-4 p-5"
+          >
+            {f.avatar ? (
+              <img
+                src={f.avatar}
+                alt={`${f.name} 的头像`}
+                class="size-14 shrink-0 rounded-2xl border border-line object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <span class="text-gradient flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-2xl font-bold">
+                {initialOf(f.name)}
+              </span>
+            )}
+            <span class="min-w-0 flex-1">
+              <span class="flex items-center gap-1 font-bold transition-colors group-hover:text-primary">
+                {f.name}
+                <Icon
+                  name="external"
+                  class="size-3.5 text-muted opacity-0 transition-opacity group-hover:opacity-100"
+                />
+              </span>
+              <span class="mt-0.5 block truncate text-sm text-muted">
+                {f.description}
+              </span>
+            </span>
+          </a>
+        ))
+      }
+    </div>
+
+    <section class="card p-6">
+      <h2 class="font-bold">🙋 想交换友链？</h2>
+      <div class="prose-anime mt-3 text-sm">
+        <p>
+          欢迎通过邮箱 <code>hi@example.com</code> 或任意渠道联系我，附上你的
+          <strong>站点名称、头像、链接和一句话简介</strong>即可。
+          只要站点是认真维护的、内容不违规，都会互相添加～
+        </p>
+        <p>本站信息（可直接复制）：</p>
+        <ul>
+          <li>名称：{siteConfig.title}</li>
+          <li>简介：{siteConfig.subtitle}</li>
+          <li>头像：{siteConfig.avatar}</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

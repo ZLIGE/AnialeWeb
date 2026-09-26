@@ -1,0 +1,298 @@
+---
+/**
+ * 伊蕾娜活立绘看板娘（单图轻量方案，替代 Live2D 模型版）。
+ * - 呼吸/悬浮 idle 动画 + 鼠标视线视差，尊重系统「减少动态效果」设置
+ * - 点击随机台词气泡；长按约 0.3 秒可拖动位置，记忆到 localStorage
+ * - 想换回真正的 Live2D 模型（例如用 psd2live 从分层 PSD 导出 .moc3 后），
+ *   把 src/config.ts 的 effects.companion 改回 'live2d' 即可
+ */
+---
+
+<div id="elaina-widget">
+  <div id="elaina-bubble"></div>
+  <div id="elaina-parallax">
+    <img
+      id="elaina-figure"
+      src="/images/elaina.webp"
+      alt="看板娘伊蕾娜"
+      draggable="false"
+    />
+  </div>
+  <div id="elaina-shadow"></div>
+</div>
+
+<style>
+  #elaina-widget {
+    position: fixed;
+    right: 14px;
+    bottom: 0;
+    width: 168px;
+    z-index: 9997;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  @media (max-width: 640px) {
+    #elaina-widget {
+      width: 116px;
+      right: 8px;
+    }
+  }
+
+  #elaina-figure {
+    display: block;
+    width: 100%;
+    height: auto;
+    cursor: grab;
+    pointer-events: auto;
+    -webkit-user-drag: none;
+    transform-origin: 50% 92%;
+    animation: elaina-idle 5.6s ease-in-out infinite;
+    filter: drop-shadow(0 6px 14px oklch(0.4 0.1 295 / 0.25));
+  }
+  #elaina-widget.dragging #elaina-figure {
+    cursor: grabbing;
+    animation-play-state: paused;
+  }
+  @keyframes elaina-idle {
+    0%,
+    100% {
+      transform: translateY(0) rotate(-0.35deg) scale(1);
+    }
+    50% {
+      transform: translateY(-4px) rotate(0.35deg) scale(1.005, 0.995);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #elaina-figure {
+      animation: none;
+    }
+  }
+
+  /* 脚下的柔和投影 */
+  #elaina-shadow {
+    position: absolute;
+    bottom: 1px;
+    left: 50%;
+    width: 68%;
+    height: 13px;
+    transform: translateX(-50%);
+    background: radial-gradient(
+      ellipse at center,
+      oklch(0.25 0.05 295 / 0.3),
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+
+  /* 台词气泡 */
+  #elaina-bubble {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    right: 0;
+    max-width: 230px;
+    padding: 10px 14px;
+    border-radius: 14px 14px 4px 14px;
+    background: linear-gradient(120deg, var(--pr), var(--accent));
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.6;
+    box-shadow: var(--shadow-card);
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity 0.25s ease,
+      transform 0.25s ease;
+    pointer-events: none;
+  }
+  #elaina-bubble.below {
+    bottom: auto;
+    top: calc(100% + 10px);
+    border-radius: 14px 4px 14px 14px;
+  }
+  #elaina-bubble.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+
+<script>
+  const widget = document.getElementById('elaina-widget')!;
+  const figure = document.getElementById('elaina-figure') as HTMLImageElement;
+  const parallaxEl = document.getElementById('elaina-parallax')!;
+  const bubble = document.getElementById('elaina-bubble')!;
+
+  // 图片缺失时静默隐藏，不影响站点
+  figure.addEventListener('error', () => widget.remove());
+
+  const POS_KEY = 'elaina-drag-pos';
+  const LONG_PRESS_MS = 300;
+  const MOVE_CANCEL_PX = 8;
+
+  const clamp = (v: number, min: number, max: number) =>
+    Math.min(Math.max(v, min), max);
+
+  const LINES = [
+    '「是的，就是我。旅途中的魔法师伊蕾娜☆」',
+    '「今天也是适合旅行的好天气呢。」',
+    '「呜嘿嘿，被你发现啦。」',
+    '「要一起去看星星吗？」',
+    '「旅途还在继续，我们下次见。」',
+    '「欢迎来到星梦小筑，旅行者。」',
+  ];
+
+  // ── 位置记忆恢复 ──────────────────────────────────────────
+  try {
+    const raw = localStorage.getItem(POS_KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      const left = clamp(Number(p.left), 0, window.innerWidth - widget.offsetWidth);
+      const top = clamp(Number(p.top), 0, window.innerHeight - widget.offsetHeight);
+      if (Number.isFinite(left) && Number.isFinite(top)) {
+        widget.style.left = `${left}px`;
+        widget.style.top = `${top}px`;
+        widget.style.right = 'auto';
+        widget.style.bottom = 'auto';
+      }
+    }
+  } catch {
+    /* 忽略损坏的记忆 */
+  }
+
+  // ── 长按拖动 ──────────────────────────────────────────────
+  let pressing = false;
+  let dragMode = false;
+  let pressTimer = 0;
+  let pointerId = -1;
+  let startX = 0;
+  let startY = 0;
+  let startLeft = 0;
+  let startTop = 0;
+
+  const cancelPress = () => {
+    pressing = false;
+    dragMode = false;
+    clearTimeout(pressTimer);
+  };
+
+  const enterDrag = () => {
+    if (!pressing) return;
+    dragMode = true;
+    startLeft = parseFloat(widget.style.left || '') || widget.getBoundingClientRect().left;
+    startTop = parseFloat(widget.style.top || '') || widget.getBoundingClientRect().top;
+    // 首次拖动时从停靠定位切换为 left/top 定位
+    if (!widget.style.left) {
+      const r = widget.getBoundingClientRect();
+      startLeft = r.left;
+      startTop = r.top;
+      widget.style.left = `${r.left}px`;
+      widget.style.top = `${r.top}px`;
+      widget.style.right = 'auto';
+      widget.style.bottom = 'auto';
+    }
+    widget.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    try {
+      widget.setPointerCapture(pointerId);
+    } catch {
+      /* 合成事件或指针已释放时忽略 */
+    }
+  };
+
+  figure.addEventListener('pointerdown', (e: PointerEvent) => {
+    pressing = true;
+    dragMode = false;
+    pointerId = e.pointerId;
+    startX = e.clientX;
+    startY = e.clientY;
+    pressTimer = window.setTimeout(enterDrag, LONG_PRESS_MS);
+  });
+
+  window.addEventListener(
+    'pointermove',
+    (e) => {
+      if (!pressing) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (!dragMode) {
+        if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) cancelPress();
+        return;
+      }
+      e.preventDefault();
+      const left = clamp(
+        startLeft + dx,
+        0,
+        window.innerWidth - widget.offsetWidth
+      );
+      const top = clamp(
+        startTop + dy,
+        0,
+        window.innerHeight - widget.offsetHeight
+      );
+      widget.style.left = `${left}px`;
+      widget.style.top = `${top}px`;
+    },
+    { passive: false }
+  );
+
+  window.addEventListener(
+    'pointerup',
+    (e) => {
+      if (!pressing) return;
+      const wasDrag = dragMode;
+      cancelPress();
+      widget.classList.remove('dragging');
+      document.body.style.userSelect = '';
+      if (wasDrag) {
+        // 拦截拖动结束的点击，避免误触台词
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          localStorage.setItem(
+            POS_KEY,
+            JSON.stringify({
+              left: parseFloat(widget.style.left) || 0,
+              top: parseFloat(widget.style.top) || 0,
+            })
+          );
+        } catch {
+          /* 隐私模式下忽略 */
+        }
+      }
+    },
+    true
+  );
+
+  window.addEventListener('pointercancel', cancelPress);
+
+  // ── 点击台词气泡 ──────────────────────────────────────────
+  let bubbleTimer = 0;
+  figure.addEventListener('click', () => {
+    bubble.textContent = LINES[Math.floor(Math.random() * LINES.length)];
+    // 靠近顶部时气泡改为向下弹出，避免被视口裁掉
+    const nearTop = widget.getBoundingClientRect().top < 120;
+    bubble.classList.toggle('below', nearTop);
+    bubble.classList.add('show');
+    clearTimeout(bubbleTimer);
+    bubbleTimer = window.setTimeout(() => bubble.classList.remove('show'), 3500);
+  });
+
+  // ── 鼠标视线视差（轻微朝光标偏移）────────────────────────
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let targetX = 0;
+    let targetY = 0;
+    let curX = 0;
+    let curY = 0;
+    window.addEventListener('mousemove', (e) => {
+      targetX = (e.clientX / window.innerWidth - 0.5) * 14;
+      targetY = (e.clientY / window.innerHeight - 0.5) * 8;
+    });
+    const tick = () => {
+      curX += (targetX - curX) * 0.06;
+      curY += (targetY - curY) * 0.06;
+      parallaxEl.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0)`;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+</script>

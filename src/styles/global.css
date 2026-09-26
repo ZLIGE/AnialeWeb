@@ -1,0 +1,358 @@
+@import 'tailwindcss';
+
+/* ── 暗色模式跟随 data-theme 属性（由 ThemeToggle / 系统偏好控制） ── */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* ════════════════ 设计令牌 · 梦幻紫 ════════════════ */
+:root {
+  /* 主色：紫罗兰；点缀色：樱花粉 */
+  --pr: oklch(0.58 0.19 295);
+  --pr-deep: oklch(0.5 0.2 295);
+  --accent: oklch(0.66 0.2 345);
+
+  --bg: oklch(0.962 0.014 305);
+  --card: oklch(0.995 0.003 310);
+  --card-t: oklch(0.995 0.003 310 / 0.86);
+  --t-main: oklch(0.28 0.035 300);
+  --t-muted: oklch(0.5 0.03 300);
+  --line: oklch(0.89 0.025 305);
+
+  /* 背景光斑 */
+  --glow-a: oklch(0.75 0.12 300 / 0.3);
+  --glow-b: oklch(0.78 0.14 345 / 0.24);
+  --glow-c: oklch(0.8 0.1 260 / 0.18);
+
+  --shadow-card: 0 8px 30px oklch(0.55 0.15 300 / 0.1);
+  --shadow-card-hover: 0 16px 44px oklch(0.55 0.15 300 / 0.2);
+  --shadow-nav: 0 4px 20px oklch(0.55 0.15 300 / 0.08);
+}
+
+[data-theme='dark'] {
+  --pr: oklch(0.78 0.12 295);
+  --pr-deep: oklch(0.68 0.16 295);
+  --accent: oklch(0.78 0.12 345);
+
+  --bg: oklch(0.185 0.035 295);
+  --card: oklch(0.243 0.04 295);
+  --card-t: oklch(0.243 0.04 295 / 0.86);
+  --t-main: oklch(0.92 0.015 305);
+  --t-muted: oklch(0.7 0.025 300);
+  --line: oklch(0.36 0.05 295);
+
+  --glow-a: oklch(0.55 0.12 295 / 0.22);
+  --glow-b: oklch(0.55 0.14 345 / 0.16);
+  --glow-c: oklch(0.5 0.1 260 / 0.16);
+
+  --shadow-card: 0 8px 30px oklch(0.1 0.05 295 / 0.4);
+  --shadow-card-hover: 0 16px 44px oklch(0.1 0.05 295 / 0.55);
+  --shadow-nav: 0 4px 20px oklch(0.1 0.05 295 / 0.35);
+}
+
+/* 把变量映射进 Tailwind，生成 bg-card / text-muted 等工具类 */
+@theme inline {
+  --color-primary: var(--pr);
+  --color-primary-deep: var(--pr-deep);
+  --color-accent: var(--accent);
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-main: var(--t-main);
+  --color-muted: var(--t-muted);
+  --color-line: var(--line);
+
+  --font-sans:
+    'Baloo 2', 'LXGW WenKai', 'PingFang SC', 'Microsoft YaHei UI',
+    'Microsoft YaHei', system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji';
+
+  --shadow-card: var(--shadow-card);
+  --shadow-lift: var(--shadow-card-hover);
+  --radius-card: 1.25rem;
+}
+
+/* ════════════════ 基础 ════════════════ */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--t-main);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+
+  /* 梦幻光斑背景 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(42rem 42rem at 6% -12%, var(--glow-a), transparent 62%),
+      radial-gradient(52rem 52rem at 108% 112%, var(--glow-b), transparent 62%),
+      radial-gradient(34rem 34rem at 92% 2%, var(--glow-c), transparent 66%);
+  }
+
+  ::selection {
+    background: oklch(0.7 0.15 300 / 0.35);
+  }
+
+  /* 细窄紫色滚动条 */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--pr) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: color-mix(in oklch, var(--pr) 55%, transparent);
+    border-radius: 3px;
+  }
+}
+
+/* ════════════════ 通用组件 ════════════════ */
+@layer components {
+  .card {
+    background-color: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    transition:
+      background-color 0.3s ease,
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+
+  .card-glass {
+    background-color: var(--card-t);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .lift {
+    transition:
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.28s ease;
+  }
+  .lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  /* 紫→粉渐变文字 */
+  .text-gradient {
+    background: linear-gradient(115deg, var(--pr) 20%, var(--accent) 80%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    padding: 0.1rem 0.65rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--pr);
+    background: color-mix(in oklch, var(--pr) 12%, transparent);
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
+  .chip:hover {
+    color: var(--card);
+    background: var(--pr);
+  }
+}
+
+/* ════════════════ Markdown 正文排版 ════════════════ */
+.prose-anime {
+  line-height: 1.85;
+  font-size: 1rem;
+  word-break: break-word;
+}
+.prose-anime > * + * {
+  margin-top: 1.1em;
+}
+.prose-anime h1,
+.prose-anime h2,
+.prose-anime h3,
+.prose-anime h4 {
+  font-weight: 700;
+  line-height: 1.4;
+  scroll-margin-top: 5.5rem;
+}
+.prose-anime h2 {
+  font-size: 1.45rem;
+  margin-top: 2.2em;
+  padding-bottom: 0.4em;
+  position: relative;
+}
+.prose-anime h2::before {
+  content: '❀';
+  margin-right: 0.45em;
+  background: linear-gradient(115deg, var(--pr), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.prose-anime h2::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--pr) 55%, transparent),
+    transparent 75%
+  );
+}
+.prose-anime h3 {
+  font-size: 1.2rem;
+  margin-top: 1.8em;
+}
+.prose-anime h3::before {
+  content: '✦';
+  margin-right: 0.4em;
+  color: var(--pr);
+}
+.prose-anime a {
+  color: var(--pr);
+  text-decoration: none;
+  border-bottom: 1.5px dashed color-mix(in oklch, var(--pr) 55%, transparent);
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+.prose-anime a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.prose-anime ul,
+.prose-anime ol {
+  padding-left: 1.6em;
+}
+.prose-anime ul {
+  list-style: none;
+}
+.prose-anime ul > li {
+  position: relative;
+}
+.prose-anime ul > li::before {
+  content: '❥';
+  position: absolute;
+  left: -1.6em;
+  color: color-mix(in oklch, var(--pr) 75%, transparent);
+  font-size: 0.85em;
+  top: 0.18em;
+}
+.prose-anime ol {
+  list-style: decimal;
+}
+.prose-anime ol > li::marker {
+  color: var(--pr);
+  font-weight: 700;
+}
+.prose-anime li + li {
+  margin-top: 0.35em;
+}
+.prose-anime blockquote {
+  border-left: 3px solid var(--pr);
+  border-radius: 0.4rem 1rem 1rem 0.4rem;
+  padding: 0.7em 1.1em;
+  background: color-mix(in oklch, var(--pr) 8%, transparent);
+  color: var(--t-muted);
+}
+.prose-anime blockquote p {
+  margin: 0;
+}
+.prose-anime :not(pre) > code {
+  font-family: ui-monospace, 'Cascadia Code', 'JetBrains Mono', Consolas,
+    monospace;
+  font-size: 0.86em;
+  padding: 0.15em 0.45em;
+  border-radius: 0.45rem;
+  background: color-mix(in oklch, var(--accent) 13%, transparent);
+  color: var(--accent);
+  transition: background-color 0.3s ease;
+}
+.prose-anime img {
+  border-radius: 1rem;
+  box-shadow: var(--shadow-card);
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+.prose-anime hr {
+  border: none;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--pr), var(--accent), transparent);
+  margin: 2.4em 0;
+}
+.prose-anime table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92em;
+  overflow: hidden;
+  border-radius: 0.8rem;
+}
+.prose-anime th,
+.prose-anime td {
+  border: 1px solid var(--line);
+  padding: 0.5em 0.9em;
+  text-align: left;
+}
+.prose-anime th {
+  background: color-mix(in oklch, var(--pr) 12%, transparent);
+  font-weight: 700;
+}
+.prose-anime tr:nth-child(even) td {
+  background: color-mix(in oklch, var(--pr) 5%, transparent);
+}
+
+/* ════════════════ 代码高亮（shiki 双主题） ════════════════ */
+.astro-code {
+  background-color: var(--shiki-light-bg, oklch(0.97 0.01 300)) !important;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  padding: 1rem 1.25rem;
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+.astro-code span {
+  color: var(--shiki-light);
+  font-style: normal;
+}
+[data-theme='dark'] .astro-code {
+  background-color: var(--shiki-dark-bg, oklch(0.22 0.03 295)) !important;
+}
+[data-theme='dark'] .astro-code span {
+  color: var(--shiki-dark);
+}
+
+/* ════════════════ 动效偏好 ════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}

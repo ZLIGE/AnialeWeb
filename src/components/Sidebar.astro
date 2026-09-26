@@ -1,0 +1,104 @@
+---
+/**
+ * 桌面端左侧栏（lg 以上显示）：个人资料卡 + 导航卡 + 标签卡
+ */
+import { siteConfig } from '../config';
+import { getAllTags, getSortedPosts, tagSlug } from '../utils/posts';
+import Icon from './Icon.astro';
+import ThemeToggle from './ThemeToggle.astro';
+
+const { title, subtitle, author, avatar, nav, social } = siteConfig;
+const current = Astro.url.pathname.replace(/\/$/, '') || '/';
+const isActive = (link: string) =>
+  link === '/' ? current === '/' : current.startsWith(link);
+
+const posts = await getSortedPosts();
+const tags = getAllTags(posts).slice(0, 12);
+---
+
+<aside
+  class="sticky top-6 hidden w-72 shrink-0 flex-col gap-5 self-start lg:flex xl:w-80"
+>
+  <!-- 个人资料卡 -->
+  <section class="card overflow-hidden">
+    <div class="h-20 bg-linear-120 from-primary to-accent"></div>
+    <div class="-mt-10 flex flex-col items-center px-5 pb-5">
+      <img
+        src={avatar}
+        alt={`${author} 的头像`}
+        class="size-20 rounded-full border-4 border-card bg-card shadow-card"
+        width="80"
+        height="80"
+      />
+      <h2 class="mt-2 text-lg font-bold">{author}</h2>
+      <p class="mt-1 text-center text-sm text-muted">{subtitle}</p>
+      <div class="mt-3 flex items-center gap-1.5">
+        {
+          social.map((s) => (
+            <a
+              href={s.url}
+              target={s.url.startsWith('/') ? undefined : '_blank'}
+              rel="noopener noreferrer"
+              aria-label={s.name}
+              title={s.name}
+              class="flex size-8 items-center justify-center rounded-full text-muted transition-all hover:-translate-y-0.5 hover:bg-primary/15 hover:text-primary"
+            >
+              <Icon name={s.icon} class="size-4.5" />
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- 导航卡 -->
+  <section class="card p-3">
+    <nav aria-label="站点导航">
+      <ul class="flex flex-col gap-1">
+        {
+          nav.map((item) => (
+            <li>
+              <a
+                href={item.link}
+                class:list={[
+                  'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all',
+                  isActive(item.link)
+                    ? 'bg-primary/15 text-primary'
+                    : 'text-muted hover:translate-x-1 hover:bg-primary/10 hover:text-primary',
+                ]}
+              >
+                <Icon name={item.icon} class="size-4.5" />
+                {item.text}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </section>
+
+  <!-- 标签卡 -->
+  <section class="card p-5">
+    <div class="mb-3 flex items-center justify-between">
+      <h3 class="text-sm font-bold">✧ 标签云</h3>
+      <a href="/tags" class="text-xs text-muted hover:text-primary"
+        >全部 →</a
+      >
+    </div>
+    <div class="flex flex-wrap gap-1.5">
+      {
+        tags.map(([tag, count]) => (
+          <a href={`/tags/${tagSlug(tag)}`} class="chip">
+            {tag}
+            <span class="opacity-60">{count}</span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- 主题切换 -->
+  <div class="flex justify-center">
+    <ThemeToggle />
+  </div>
+</aside>

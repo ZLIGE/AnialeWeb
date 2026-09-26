@@ -1,0 +1,87 @@
+---
+/**
+ * 全局骨架：SEO 头部 / 明暗主题初始化 / 左侧栏 + 主内容栅格 / 特效挂载
+ */
+import '@fontsource/baloo-2/400.css';
+import '@fontsource/baloo-2/600.css';
+import '@fontsource/baloo-2/700.css';
+import 'lxgw-wenkai-webfont/lxgwwenkai-regular.css';
+import 'lxgw-wenkai-webfont/lxgwwenkai-bold.css';
+import '../styles/global.css';
+
+import { siteConfig } from '../config';
+import Navbar from '../components/Navbar.astro';
+import Sidebar from '../components/Sidebar.astro';
+import Footer from '../components/Footer.astro';
+import Sakura from '../components/Sakura.astro';
+import ElainaWidget from '../components/ElainaWidget.astro';
+import Live2DWidget from '../components/Live2DWidget.astro';
+
+interface Props {
+  /** 页面标题（自动拼接站点名） */
+  title?: string;
+  description?: string;
+}
+
+const { title, description = siteConfig.description } = Astro.props;
+const pageTitle = title ? `${title} · ${siteConfig.title}` : siteConfig.title;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang={siteConfig.locale.split('-')[0]}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content={siteConfig.author} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title={siteConfig.title} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL(siteConfig.banner.image, Astro.site)} />
+    <meta property="og:site_name" content={siteConfig.title} />
+
+    <!-- 明暗模式初始化（内联执行，避免闪烁） -->
+    <script is:inline>
+      (() => {
+        let theme;
+        try {
+          theme = localStorage.getItem('theme');
+        } catch {}
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+  </head>
+
+  <body>
+    <Navbar />
+
+    <div
+      class="mx-auto flex max-w-[82rem] items-start gap-6 px-4 pb-10 pt-20 sm:px-6 lg:px-8 lg:pt-6"
+    >
+      <Sidebar />
+      <main class="min-w-0 flex-1 py-2 lg:py-6">
+        <slot />
+      </main>
+    </div>
+
+    <Footer />
+    {siteConfig.effects.sakura && <Sakura />}
+    {siteConfig.effects.companion === 'elaina' && <ElainaWidget />}
+    {siteConfig.effects.companion === 'live2d' && <Live2DWidget />}
+  </body>
+</html>

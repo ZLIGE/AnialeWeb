@@ -1,0 +1,14 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+.astro/
+
+# ZCode 工作区状态
+.zcode/
+
+# 日志与系统文件
+*.log
+.DS_Store
+Thumbs.db

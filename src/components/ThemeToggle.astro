@@ -1,0 +1,28 @@
+---
+import Icon from './Icon.astro';
+---
+
+<button
+  class="theme-toggle flex size-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-primary/10 hover:text-primary"
+  aria-label="切换明暗模式"
+  title="切换明暗模式 ✧"
+>
+  <Icon name="sun" class="hidden size-5 dark:block" />
+  <Icon name="moon" class="size-5 dark:hidden" />
+</button>
+
+<script>
+  // 组件可能被渲染多份（移动端导航栏 + 桌面侧栏），逐一绑定
+  document.querySelectorAll('.theme-toggle').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const root = document.documentElement;
+      const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try {
+        localStorage.setItem('theme', next);
+      } catch {
+        /* 隐私模式下忽略 */
+      }
+    });
+  });
+</script>

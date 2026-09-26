@@ -1,0 +1,65 @@
+---
+/**
+ * 文章卡片：左侧文字（分类/标题/摘要/日期标签）+ 右侧封面缩略图
+ */
+import Icon from './Icon.astro';
+import { formatDate, tagSlug, type Post } from '../utils/posts';
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+const { title, description, published, tags, category, image } = post.data;
+---
+
+<article class="card lift group overflow-hidden">
+  <a
+    href={`/posts/${post.id}`}
+    class="flex h-full items-stretch gap-4"
+    aria-label={title}
+  >
+    <div class="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
+      <div class="flex items-center gap-2 text-xs text-muted">
+        <span
+          class="rounded-full bg-primary/12 px-2.5 py-0.5 font-medium text-primary"
+        >
+          {category}
+        </span>
+        <span class="inline-flex items-center gap-1">
+          <Icon name="calendar" class="size-3.5" />
+          {formatDate(published)}
+        </span>
+      </div>
+      <h2
+        class="mt-2.5 line-clamp-2 text-lg font-bold transition-colors group-hover:text-primary sm:text-xl"
+      >
+        {title}
+      </h2>
+      <p class="mt-2 line-clamp-2 text-sm text-muted">
+        {description || '（这篇主人偷懒没有写摘要喵～）'}
+      </p>
+      {
+        tags.length > 0 && (
+          <div class="mt-auto flex flex-wrap gap-1.5 pt-3">
+            {tags.map((t) => (
+              <span class="chip">#{t}</span>
+            ))}
+          </div>
+        )
+      }
+    </div>
+    {
+      image && (
+        <div class="hidden w-44 shrink-0 self-stretch sm:block lg:w-52">
+          <img
+            src={image}
+            alt={`《${title}》封面`}
+            class="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+        </div>
+      )
+    }
+  </a>
+</article>

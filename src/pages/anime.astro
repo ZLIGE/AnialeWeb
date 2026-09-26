@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import { animeList } from '../data/anime';
+
+const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
+---
+
+<BaseLayout title="追番录" description="我的追番清单与一句话感想">
+  <div class="flex flex-col gap-5">
+    <h1 class="card px-5 py-3.5 text-lg font-bold">
+      ✧ 追番录
+      <span class="ml-1.5 text-sm font-normal text-muted"
+        >（{animeList.length} 部）</span
+      >
+    </h1>
+
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {
+        animeList.map((a) => (
+          <section class="card lift flex flex-col overflow-hidden">
+            {/* 封面占位：渐变底 + emoji，有条件可换成真实封面图 */}
+            <div class="relative flex h-32 items-center justify-center bg-linear-130 from-primary/25 via-accent/15 to-primary/10">
+              <span class="text-5xl drop-shadow-sm">{a.emoji ?? '🌸'}</span>
+              <span class="absolute right-3 top-3 rounded-full bg-black/25 px-2.5 py-0.5 text-xs text-white backdrop-blur-sm">
+                {a.year}
+              </span>
+            </div>
+            <div class="flex flex-1 flex-col p-5">
+              <h2 class="font-bold leading-snug">{a.title}</h2>
+              <div class="mt-1.5 flex items-center gap-2 text-sm">
+                <span class="text-amber-400">{stars(a.rating)}</span>
+                <span class="text-xs text-muted">{a.progress}</span>
+              </div>
+              <p class="mt-2 flex-1 text-sm leading-relaxed text-muted">
+                {a.comment}
+              </p>
+              {a.link && (
+                <a
+                  href={a.link}
+                  class="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:text-accent"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Icon name="link" class="size-3.5" /> 条目链接
+                </a>
+              )}
+            </div>
+          </section>
+        ))
+      }
+    </div>
+
+    <p class="card px-5 py-3 text-center text-sm text-muted">
+      🌙 评分 purely 主观，真实可靠度与我的睡眠时间成反比
+    </p>
+  </div>
+</BaseLayout>
