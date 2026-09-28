@@ -1,0 +1,91 @@
+---
+/**
+ * 公告卡：桌面端显示在左侧栏，移动端（lg 以下）显示在内容顶部。
+ * 内容与开关在 src/config.ts 的 announcement 配置。
+ * 用户关闭后按内容哈希记忆（改公告文字会重新显示）。
+ */
+import { siteConfig } from '../config';
+import Icon from './Icon.astro';
+
+interface Props {
+  /** 多实例时传入不同 id */
+  id?: string;
+}
+
+const { id = 'announcement' } = Astro.props;
+const { text, link } = siteConfig.announcement;
+const show = Boolean(text && text.trim());
+---
+
+{
+  show && (
+    <section
+      id={id}
+      data-announcement
+      class="card border-primary/30 p-4"
+      style="background: color-mix(in oklch, var(--pr) 9%, var(--card))"
+    >
+      <div class="flex items-center justify-between">
+        <h3 class="flex items-center gap-1.5 text-sm font-bold text-primary">
+          <Icon name="megaphone" class="size-4" />
+          公告
+        </h3>
+        <button
+          data-announce-close
+          class="rounded-full p-1 text-muted transition-colors hover:bg-primary/10 hover:text-primary"
+          aria-label="关闭公告"
+        >
+          <Icon name="x" class="size-3.5" />
+        </button>
+      </div>
+      <p data-announce-text class="mt-2 text-sm leading-relaxed">
+        {text}
+      </p>
+      {link && link.url && (
+        <a
+          href={link.url}
+          class="mt-2.5 inline-flex items-center gap-0.5 text-xs font-medium text-primary transition-colors hover:text-accent"
+        >
+          {link.text || '查看详情'}
+          <Icon name="chevron-right" class="size-3.5" />
+        </a>
+      )}
+    </section>
+  )
+}
+
+<script is:inline data-astro-rerun>
+  (function () {
+    document.querySelectorAll('[data-announcement]').forEach(function (el) {
+      if (el.dataset.announceBound) return;
+      el.dataset.announceBound = '1';
+      var textEl = el.querySelector('[data-announce-text]');
+      var content = textEl ? textEl.textContent : '';
+      var hash = 5381;
+      for (var i = 0; i < content.length; i++) {
+        hash = ((hash << 5) + hash + content.charCodeAt(i)) >>> 0;
+      }
+      var key = 'announce-dismissed:' + hash.toString(36);
+      try {
+        if (localStorage.getItem(key)) {
+          el.remove();
+          return;
+        }
+      } catch (e) {}
+      var btn = el.querySelector('[data-announce-close]');
+      if (btn) {
+        btn.addEventListener('click', function () {
+          try {
+            localStorage.setItem(key, '1');
+          } catch (e) {}
+          el.style.transition = 'opacity .25s ease, transform .25s ease';
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(-6px)';
+          setTimeout(function () {
+            el.remove();
+          }, 260);
+        });
+      }
+    });
+  })();
+</script>

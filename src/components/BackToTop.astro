@@ -1,0 +1,76 @@
+---
+/**
+ * 回到顶部按钮：滚动超过一屏后从右下角浮现（默认位于伊蕾娜立绘上方），
+ * 点击平滑回顶；尊重系统「减少动态效果」设置（改为直接跳转）。
+ */
+import Icon from './Icon.astro';
+---
+
+<button
+  id="back-to-top"
+  class="card fixed right-5 bottom-[312px] z-40 flex size-11 items-center justify-center text-muted transition-colors hover:text-primary max-sm:bottom-[214px]"
+  aria-label="回到顶部"
+  title="回到顶部 ✧"
+>
+  <Icon name="chevron-up" class="size-5" />
+</button>
+
+<style>
+  #back-to-top {
+    opacity: 0;
+    transform: translateY(0.75rem);
+    pointer-events: none;
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease,
+      background-color 0.3s ease,
+      color 0.2s ease;
+  }
+  #back-to-top.show {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+  #back-to-top.show:hover {
+    transform: translateY(-3px);
+  }
+</style>
+
+<!-- is:inline 紧跟按钮之后同步执行；data-astro-rerun 保证视图过渡换页后重新初始化新按钮 -->
+<script is:inline data-astro-rerun>
+  (function () {
+    var btn = document.getElementById('back-to-top');
+    if (!btn) return;
+    var update = function () {
+      btn.classList.toggle('show', window.scrollY > window.innerHeight);
+    };
+    // window 上的滚动监听只绑定一次，处理器每次惰性查询当前按钮
+    if (!window.__bttScrollBound) {
+      window.__bttScrollBound = true;
+      window.addEventListener(
+        'scroll',
+        function () {
+          var b = document.getElementById('back-to-top');
+          if (b) b.classList.toggle('show', window.scrollY > window.innerHeight);
+        },
+        { passive: true }
+      );
+    }
+    update();
+    btn.addEventListener('click', function () {
+      var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduced) {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        return;
+      }
+      var startY = window.scrollY;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // 部分嵌入式浏览器不支持平滑滚动：250ms 内无位移则退回直接跳转
+      setTimeout(function () {
+        if (startY > 5 && window.scrollY > startY - 5) {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+        }
+      }, 250);
+    });
+  })();
+</script>

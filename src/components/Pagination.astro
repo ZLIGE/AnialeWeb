@@ -1,6 +1,7 @@
 ---
 /**
- * 分页条：上一页 / 页码 / 下一页
+ * 分页条：上一页 / 页码（带省略号窗口）/ 下一页。
+ * 常驻显示——即使只有一页也会展示当前页数（Fuwari 风格）。
  */
 import Icon from './Icon.astro';
 
@@ -14,43 +15,77 @@ interface Props {
 const { current, total, basePath = '' } = Astro.props;
 const pageHref = (n: number) =>
   n === 1 ? `${basePath}/` : `${basePath}/page/${n}`;
+
+/** 生成页码序列：总页数少则全列；多则 1 … 邻近页 … total 的窗口样式 */
+function pageList(current: number, total: number): (number | '…')[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  let lo = Math.max(2, current - 1);
+  let hi = Math.min(total - 1, current + 1);
+  if (current <= 3) hi = Math.min(total - 1, 5);
+  if (current >= total - 2) lo = Math.max(2, total - 4);
+  const items: (number | '…')[] = [1];
+  if (lo > 2) items.push('…');
+  for (let i = lo; i <= hi; i++) items.push(i);
+  if (hi < total - 1) items.push('…');
+  items.push(total);
+  return items;
+}
+
+const pages = pageList(current, total);
 ---
 
 {
-  total > 1 && (
+  total >= 1 && (
     <nav class="mt-6 flex items-center justify-center gap-1.5" aria-label="分页">
-      {current > 1 && (
-        <a
-          href={pageHref(current - 1)}
-          class="card flex size-9 items-center justify-center text-muted hover:text-primary"
-          aria-label="上一页"
-        >
-          <Icon name="chevron-left" class="size-4" />
-        </a>
-      )}
-      {Array.from({ length: total }, (_, i) => i + 1).map((n) =>
-        n === current ? (
-          <span class="flex size-9 items-center justify-center rounded-xl bg-primary font-bold text-white shadow-card">
-            {n}
+      <a
+        href={current > 1 ? pageHref(current - 1) : undefined}
+        class:list={[
+          'card flex size-9 items-center justify-center',
+          current > 1
+            ? 'text-muted hover:text-primary'
+            : 'pointer-events-none opacity-30',
+        ]}
+        aria-label="上一页"
+        aria-disabled={current <= 1}
+      >
+        <Icon name="chevron-left" class="size-4" />
+      </a>
+      {pages.map((p) =>
+        p === '…' ? (
+          <span class="px-1 text-sm text-muted" aria-hidden="true">
+            …
+          </span>
+        ) : p === current ? (
+          <span
+            class="flex size-9 items-center justify-center rounded-xl bg-primary font-bold text-white shadow-card"
+            aria-current="page"
+          >
+            {p}
           </span>
         ) : (
           <a
-            href={pageHref(n)}
+            href={pageHref(p)}
             class="card flex size-9 items-center justify-center text-muted transition-colors hover:text-primary"
           >
-            {n}
+            {p}
           </a>
         )
       )}
-      {current < total && (
-        <a
-          href={pageHref(current + 1)}
-          class="card flex size-9 items-center justify-center text-muted hover:text-primary"
-          aria-label="下一页"
-        >
-          <Icon name="chevron-right" class="size-4" />
-        </a>
-      )}
+      <a
+        href={current < total ? pageHref(current + 1) : undefined}
+        class:list={[
+          'card flex size-9 items-center justify-center',
+          current < total
+            ? 'text-muted hover:text-primary'
+            : 'pointer-events-none opacity-30',
+        ]}
+        aria-label="下一页"
+        aria-disabled={current >= total}
+      >
+        <Icon name="chevron-right" class="size-4" />
+      </a>
     </nav>
   )
 }

@@ -1,10 +1,13 @@
 ---
 /**
- * 移动端顶部栏（lg 以下显示）：站点名 + 主题切换 + 汉堡菜单抽屉
+ * 顶部功能栏（参考 shirone.mysqil.com）：站点名 + 图标导航 + 搜索/调色板/主题。
+ * 页面顶部时透明，滚动后变为毛玻璃卡片；移动端（lg 以下）收纳为汉堡抽屉。
+ * 事件全部使用委托，视图过渡换页后依然生效。
  */
 import { siteConfig } from '../config';
 import Icon from './Icon.astro';
 import ThemeToggle from './ThemeToggle.astro';
+import PaletteSwitcher from './PaletteSwitcher.astro';
 
 const { title, nav } = siteConfig;
 const current = Astro.url.pathname.replace(/\/$/, '') || '/';
@@ -12,23 +15,53 @@ const isActive = (link: string) =>
   link === '/' ? current === '/' : current.startsWith(link);
 ---
 
-<header
-  class="card-glass fixed inset-x-0 top-0 z-40 border-b border-line lg:hidden"
->
-  <div class="flex h-14 items-center justify-between px-4">
-    <a href="/" class="flex items-center gap-2.5">
-      <img
-        src={siteConfig.avatar}
-        alt="头像"
-        class="size-8 rounded-full border border-line"
-      />
-      <span class="text-gradient font-bold">{title}</span>
+<header id="site-navbar" class="fixed inset-x-0 top-0 z-50">
+  <div
+    class="navbar-row mx-auto flex h-16 max-w-[86rem] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
+  >
+    <!-- 站点标识：竖条装饰 + 站名 -->
+    <a href="/" class="flex shrink-0 items-center gap-2 text-lg font-bold tracking-wide">
+      <span class="h-5 w-1 rounded-full bg-linear-180 from-primary to-accent"></span>
+      <span class="text-gradient">{title}</span>
     </a>
-    <div class="flex items-center gap-1">
+
+    <!-- 桌面图标导航 -->
+    <nav class="hidden items-center gap-0.5 lg:flex" aria-label="主导航">
+      {
+        nav.map((item) => (
+          <a
+            href={item.link}
+            class:list={[
+              'relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+              isActive(item.link)
+                ? 'text-primary'
+                : 'text-muted hover:bg-primary/10 hover:text-primary',
+            ]}
+            aria-current={isActive(item.link) ? 'page' : undefined}
+          >
+            <Icon name={item.icon} class="size-4" />
+            {item.text}
+            {isActive(item.link) && (
+              <span class="absolute inset-x-3 -bottom-[9px] h-0.5 rounded-full bg-primary" />
+            )}
+          </a>
+        ))
+      }
+    </nav>
+
+    <!-- 右侧功能区：搜索 / 调色板 / 明暗切换 / 移动端菜单 -->
+    <div class="flex shrink-0 items-center gap-1">
+      <button
+        class="search-trigger hidden size-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-primary/10 hover:text-primary sm:flex"
+        aria-label="搜索文章"
+      >
+        <Icon name="search" class="size-5" />
+      </button>
+      <PaletteSwitcher direction="down" />
       <ThemeToggle />
       <button
         id="menu-open"
-        class="flex size-9 items-center justify-center rounded-full text-muted hover:bg-primary/10 hover:text-primary"
+        class="flex size-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-primary/10 hover:text-primary lg:hidden"
         aria-label="打开菜单"
       >
         <Icon name="menu" class="size-5" />
@@ -37,15 +70,15 @@ const isActive = (link: string) =>
   </div>
 </header>
 
-<!-- 抽屉菜单 -->
-<div id="menu-drawer" class="fixed inset-0 z-50 hidden lg:hidden">
+<!-- 抽屉菜单（移动端） -->
+<div id="menu-drawer" class="fixed inset-0 z-[60] hidden lg:hidden">
   <div
     id="menu-mask"
-    class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+    class="absolute inset-0 bg-black/45 backdrop-blur-sm transition-opacity"
   >
   </div>
   <nav
-    class="card absolute right-3 top-3 w-64 p-3 shadow-lift"
+    class="card card-glass absolute right-3 top-3 w-64 p-3 shadow-lift"
     aria-label="站点导航"
   >
     <div class="mb-2 flex items-center justify-between px-2 pt-1">
@@ -55,7 +88,7 @@ const isActive = (link: string) =>
         class="flex size-8 items-center justify-center rounded-full text-muted hover:bg-primary/10 hover:text-primary"
         aria-label="关闭菜单"
       >
-        <Icon name="x" class="size-4.5" />
+        <Icon name="x" class="size-4" />
       </button>
     </div>
     <ul class="flex flex-col gap-1">
@@ -81,14 +114,49 @@ const isActive = (link: string) =>
   </nav>
 </div>
 
+<style>
+  /* 顶部：完全透明融入页面；滚动后：近不透明卡片。
+     不使用 backdrop-filter：滚动跨越阈值时它会被创建/销毁，
+     Chromium 合成新层的瞬间会在页面顶部闪出一条白色发丝线；
+     背景 96% 不透明后毛玻璃本身也无可见效果 */
+  #site-navbar.is-scrolled {
+    background-color: color-mix(in oklch, var(--card) 96%, transparent);
+    border-bottom: 1px solid var(--line);
+    box-shadow: var(--shadow-nav);
+  }
+  /* 悬浮于 Hero 大图之上时：文字与图标用白色（调色板弹层除外） */
+  #site-navbar.over-hero .navbar-row :where(a, button, span) {
+    color: #fff;
+  }
+  #site-navbar.over-hero .navbar-row .palette-pop :where(a, button, span) {
+    color: var(--t-main);
+  }
+  #site-navbar.over-hero .navbar-row .palette-pop {
+    color: var(--t-main);
+  }
+</style>
+
 <script>
-  const drawer = document.getElementById('menu-drawer');
-  const open = () => drawer?.classList.remove('hidden');
-  const close = () => drawer?.classList.add('hidden');
-  document.getElementById('menu-open')?.addEventListener('click', open);
-  document.getElementById('menu-close')?.addEventListener('click', close);
-  document.getElementById('menu-mask')?.addEventListener('click', close);
-  drawer
-    ?.querySelectorAll('a')
-    .forEach((a) => a.addEventListener('click', close));
+  // 滚动状态：顶部透明（首页 Hero 上为白字）↔ 毛玻璃卡片；
+  // window 监听只绑定一次，处理器惰性查询当前头部
+  function updateNavbar() {
+    const header = document.getElementById('site-navbar');
+    if (!header) return;
+    const scrolled = window.scrollY > 24;
+    header.classList.toggle('is-scrolled', scrolled);
+    const heroEl = document.getElementById('hero');
+    const overHero =
+      document.body.dataset.hasHero === 'true' &&
+      !!heroEl &&
+      window.scrollY < heroEl.offsetHeight - 64;
+    header.classList.toggle('over-hero', overHero);
+  }
+  if (
+    !(window as unknown as { __navScrollBound?: boolean }).__navScrollBound
+  ) {
+    (window as unknown as { __navScrollBound: boolean }).__navScrollBound = true;
+    window.addEventListener('scroll', updateNavbar, { passive: true });
+  }
+  updateNavbar();
+  document.addEventListener('astro:page-load', updateNavbar);
 </script>

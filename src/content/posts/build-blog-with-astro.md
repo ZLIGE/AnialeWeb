@@ -3,6 +3,7 @@ title: 从零用 Astro 搭一座梦幻紫小站
 published: 2026-09-05
 updated: 2026-09-22
 description: 本站搭建全记录：技术选型、OKLCH 主题系统、樱花特效与看板娘的实现思路。
+image: /images/cover-astro.svg
 tags:
   - Astro
   - 前端

@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1152 648" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#241a4f"/>
+      <stop offset="0.45" stop-color="#4c3a86"/>
+      <stop offset="0.78" stop-color="#8f6cc0"/>
+      <stop offset="1" stop-color="#e8aed6"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b48ae8"/>
+      <stop offset="1" stop-color="#f2a9d4"/>
+    </linearGradient>
+    <radialGradient id="tvGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#e9c8ff" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#e9c8ff" stop-opacity="0"/>
+    </radialGradient>
+    <g id="petal">
+      <path d="M0 6 C 5 3 5.5 -3 1.5 -6.5 L0 -4 L-1.5 -6.5 C -5.5 -3 -5 3 0 6 Z" fill="#f7c3de" opacity="0.85"/>
+    </g>
+  </defs>
+
+  <rect width="1152" height="648" fill="url(#sky)"/>
+
+  <!-- 星星 -->
+  <g fill="#fff">
+    <circle cx="110" cy="80" r="2.2" opacity="0.9"/>
+    <circle cx="260" cy="140" r="1.6" opacity="0.65"/>
+    <circle cx="420" cy="60" r="2" opacity="0.85"/>
+    <circle cx="600" cy="110" r="1.5" opacity="0.6"/>
+    <circle cx="760" cy="50" r="1.8" opacity="0.8"/>
+    <circle cx="920" cy="130" r="1.5" opacity="0.6"/>
+    <circle cx="1060" cy="70" r="2" opacity="0.85"/>
+    <circle cx="180" cy="230" r="1.5" opacity="0.5"/>
+    <circle cx="1000" cy="220" r="1.4" opacity="0.5"/>
+    <circle cx="540" cy="40" r="1.4" opacity="0.6"/>
+  </g>
+  <g fill="#fff">
+    <path d="M330 100 L334 112 L346 116 L334 120 L330 132 L326 120 L314 116 L326 112 Z" opacity="0.9"/>
+    <path d="M960 90 L963 99 L972 102 L963 105 L960 114 L957 105 L948 102 L957 99 Z" opacity="0.85"/>
+    <path d="M80 300 L83 309 L92 312 L83 315 L80 324 L77 315 L68 312 L77 309 Z" opacity="0.7"/>
+  </g>
+
+  <!-- 远山 -->
+  <path d="M0 560 Q 200 500 430 540 Q 660 578 860 545 Q 1020 520 1152 550 L 1152 648 L 0 648 Z" fill="#332558" opacity="0.9"/>
+  <path d="M0 612 Q 300 566 620 596 Q 900 622 1152 596 L 1152 648 L 0 648 Z" fill="#241a45"/>
+
+  <!-- 电视机 -->
+  <circle cx="700" cy="330" r="230" fill="url(#tvGlow)"/>
+  <rect x="540" y="185" width="330" height="240" rx="22" fill="#2c2054" stroke="#5a4390" stroke-width="5"/>
+  <rect x="562" y="207" width="286" height="196" rx="12" fill="url(#screen)"/>
+  <!-- 屏幕里的迷你夜景 -->
+  <circle cx="790" cy="255" r="26" fill="#fff6d8" mask="url(#miniMoon)"/>
+  <mask id="miniMoon">
+    <circle cx="790" cy="255" r="26" fill="#fff"/>
+    <circle cx="800" cy="248" r="23" fill="#000"/>
+  </mask>
+  <g fill="#fff">
+    <circle cx="610" cy="240" r="2.5"/>
+    <circle cx="660" cy="280" r="2"/>
+    <circle cx="700" cy="235" r="2"/>
+    <circle cx="640" cy="330" r="2"/>
+    <circle cx="740" cy="350" r="2.5"/>
+    <circle cx="810" cy="330" r="2"/>
+  </g>
+  <path d="M562 360 Q 640 340 705 360 Q 780 382 848 358 L 848 403 L 562 403 Z" fill="#5a4390" opacity="0.85"/>
+  <!-- 电视脚 -->
+  <rect x="640" y="425" width="14" height="34" rx="6" fill="#2c2054"/>
+  <rect x="750" y="425" width="14" height="34" rx="6" fill="#2c2054"/>
+  <rect x="600" y="458" width="210" height="12" rx="6" fill="#2c2054"/>
+
+  <!-- 看电视的小猫剪影 -->
+  <g fill="#1d1538">
+    <path d="M200 560 C 200 528 224 512 248 512 C 272 512 296 528 296 560 L 296 574 L 200 574 Z"/>
+    <path d="M222 522 L 216 500 L 236 512 Z"/>
+    <path d="M274 522 L 280 500 L 260 512 Z"/>
+    <path d="M294 566 Q 322 560 318 534 Q 316 524 306 528 Q 314 546 294 556 Z"/>
+  </g>
+  <circle cx="240" cy="538" r="2.2" fill="#ffd76e"/>
+  <circle cx="264" cy="538" r="2.2" fill="#ffd76e"/>
+
+  <!-- 漂浮花瓣 -->
+  <g>
+    <use href="#petal" transform="translate(380 200) rotate(30)"/>
+    <use href="#petal" transform="translate(450 330) rotate(-40) scale(1.2)"/>
+    <use href="#petal" transform="translate(330 440) rotate(70)"/>
+    <use href="#petal" transform="translate(150 150) rotate(-15) scale(0.9)"/>
+    <use href="#petal" transform="translate(1020 320) rotate(50) scale(1.1)"/>
+    <use href="#petal" transform="translate(900 480) rotate(-60)"/>
+    <use href="#petal" transform="translate(1090 430) rotate(20) scale(1.2)"/>
+  </g>
+</svg>

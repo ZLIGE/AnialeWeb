@@ -1,0 +1,215 @@
+---
+/**
+ * 站内搜索弹窗：懒加载 /search-index.json（构建时生成的全文索引），
+ * 支持标题 / 标签 / 分类 / 摘要 / 正文的多关键词匹配与结果摘要。
+ * 触发：任意 .search-trigger 元素、Ctrl/Cmd + K、或 「/」快捷键；Esc 关闭。
+ */
+import { siteConfig } from '../config';
+import Icon from './Icon.astro';
+
+const { title } = siteConfig;
+---
+
+<div id="search-modal" class="fixed inset-0 z-[70] hidden" transition:persist="search">
+  <div class="search-mask absolute inset-0 bg-black/45 backdrop-blur-sm">
+  </div>
+  <div
+    class="card card-glass relative mx-auto mt-[10vh] w-[min(92vw,640px)] overflow-hidden !rounded-2xl"
+  >
+    <div class="flex items-center gap-2.5 border-b border-line px-4">
+      <Icon name="search" class="size-4.5 shrink-0 text-muted" />
+      <input
+        id="search-input"
+        type="text"
+        class="w-full bg-transparent py-3.5 text-sm outline-none placeholder:text-muted/60"
+        placeholder={`搜索 ${title} 的文章…`}
+        autocomplete="off"
+      />
+      <button
+        id="search-close"
+        class="shrink-0 rounded-lg border border-line px-2 py-0.5 text-[10px] text-muted hover:text-primary"
+        aria-label="关闭搜索"
+      >
+        ESC
+      </button>
+    </div>
+    <div id="search-results" class="max-h-[54vh] min-h-32 overflow-y-auto p-2">
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    var modal = document.getElementById('search-modal');
+    var input = document.getElementById('search-input');
+    var results = document.getElementById('search-results');
+    if (!modal || !input || !results) return;
+
+    var index = null; // 懒加载缓存
+    var lastQuery = '';
+
+    function esc(s) {
+      return String(s).replace(
+        /[&<>"']/g,
+        (c) =>
+          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+      );
+    }
+
+    function loadIndex() {
+      if (index) return Promise.resolve(index);
+      return fetch('/search-index.json')
+        .then((r) => r.json())
+        .then((data) => (index = data))
+        .catch(() => {
+          index = [];
+          return [];
+        });
+    }
+
+    /** 多关键词 AND 匹配：标题 > 标签 > 分类 > 摘要 > 正文 */
+    function search(items, query) {
+      var terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      if (terms.length === 0) return items.map((it) => ({ item: it, snippet: it.description }));
+      var hits = [];
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        var low = {
+          title: (it.title || '').toLowerCase(),
+          desc: (it.description || '').toLowerCase(),
+          cat: (it.category || '').toLowerCase(),
+          tags: (it.tags || []).join(' ').toLowerCase(),
+          text: (it.text || '').toLowerCase(),
+        };
+        var score = 0;
+        var missing = false;
+        var firstIdx = -1;
+        for (var j = 0; j < terms.length; j++) {
+          var t = terms[j];
+          var s = 0;
+          if (low.title.indexOf(t) >= 0) s += 10;
+          if (low.tags.indexOf(t) >= 0) s += 5;
+          if (low.cat.indexOf(t) >= 0) s += 4;
+          if (low.desc.indexOf(t) >= 0) s += 3;
+          var idx = low.text.indexOf(t);
+          if (idx >= 0) {
+            s += 1;
+            if (firstIdx < 0) firstIdx = idx;
+          }
+          if (s === 0) {
+            missing = true;
+            break;
+          }
+          score += s;
+        }
+        if (missing) continue;
+        var snippet = it.description || '';
+        if (firstIdx >= 0 && it.text) {
+          var start = Math.max(0, firstIdx - 25);
+          snippet = (start > 0 ? '…' : '') + it.text.slice(start, firstIdx + 55) + '…';
+        }
+        hits.push({ item: it, score: score, snippet: snippet });
+      }
+      hits.sort(function (a, b) {
+        return b.score - a.score;
+      });
+      return hits.slice(0, 8);
+    }
+
+    function render(query) {
+      if (!query.trim()) {
+        var all = (index || []).slice(0, 8);
+        results.innerHTML =
+          '<div class="px-3 py-2 text-[11px] text-muted">✧ ' +
+          (all.length ? '全部文章' : '暂无文章') +
+          '</div>' +
+          all
+            .map(function (it) {
+              return itemHtml(it, it.description);
+            })
+            .join('');
+        return;
+      }
+      var hits = search(index || [], query);
+      results.innerHTML = hits.length
+        ? hits
+            .map(function (h) {
+              return itemHtml(h.item, h.snippet);
+            })
+            .join('')
+        : '<div class="px-4 py-10 text-center text-sm text-muted">（＞﹏＜）没有找到「' +
+          esc(query) +
+          '」相关的文章…换个关键词试试？</div>';
+    }
+
+    function itemHtml(it, snippet) {
+      var tags = (it.tags || [])
+        .slice(0, 3)
+        .map(function (t) {
+          return '#' + esc(t);
+        })
+        .join('　');
+      return (
+        '<a href="' + it.url + '" class="block rounded-xl px-3 py-2.5 transition-colors hover:bg-primary/10">' +
+        '<div class="flex items-center justify-between gap-3">' +
+        '<span class="truncate text-sm font-bold">' + esc(it.title) + '</span>' +
+        '<span class="shrink-0 text-[10px] text-primary/80">' + esc(it.category) + '</span>' +
+        '</div>' +
+        (snippet ? '<div class="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">' + esc(snippet) + '</div>' : '') +
+        (tags ? '<div class="mt-1 text-[10px] text-muted/80">' + tags + '</div>' : '') +
+        '</a>'
+      );
+    }
+
+    function open() {
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      input.value = '';
+      render('');
+      loadIndex().then(function () {
+        if (input.value === '') render(input.value);
+      });
+      setTimeout(function () {
+        input.focus();
+      }, 50);
+    }
+
+    function close() {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('click', function (e) {
+      var t =
+        e.target instanceof Element
+          ? e.target.closest('.search-trigger')
+          : null;
+      if (t) open();
+    });
+    document.getElementById('search-close').addEventListener('click', close);
+    modal.querySelector('.search-mask').addEventListener('click', close);
+
+    var debounce = 0;
+    input.addEventListener('input', function () {
+      clearTimeout(debounce);
+      debounce = setTimeout(function () {
+        render(input.value);
+      }, 120);
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+        close();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        modal.classList.contains('hidden') ? open() : close();
+      } else if (e.key === '/' && modal.classList.contains('hidden')) {
+        var tag = (document.activeElement && document.activeElement.tagName) || '';
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+          e.preventDefault();
+          open();
+        }
+      }
+    });
+  })();
+</script>

@@ -9,7 +9,8 @@
 
 ## ✨ 特性
 
-- 🌙 **明暗双主题**：OKLCH 梦幻紫配色，跟随系统偏好 + 手动切换，无刷新闪烁
+- 🌙 **明暗双主题**：OKLCH 梦幻紫配色，默认暗黑主题，手动切换后记忆选择，无刷新闪烁
+- 🎨 **主题调色板**：6 套预设色板（梦幻紫 / 樱花粉 / 天空蓝 / 薄荷绿 / 落日橙 / 翡翠青）一键全站换色，选择记忆
 - 🌸 **樱花飘落**：Canvas 手绘花瓣特效（尊重系统「减少动态效果」设置）
 - 👧 **看板娘双形态**：`elaina` 单图活立绘（呼吸动画 / 视线视差 / 点击台词 / 长按拖动）或 `live2d` 模型（oh-my-live2d 驱动），config 一键切换
 - 🖼️ **原创 Banner 插图**：梦幻星空 SVG（无版权烦恼，随时可换自己的图）
@@ -69,10 +70,12 @@ draft: false               # true 为草稿，不会发布
 分别编辑 `src/data/anime.ts`、`src/data/projects.ts`、`src/data/friends.ts`，
 每个字段都有中文注释，增删条目即可。
 
-### 4. 换 Banner / 头像
+### 4. 换首页 Hero 轮播图 / 头像
 
-把图片放进 `public/images/`，然后改 `src/config.ts` 里的
-`banner.image` 与 `avatar`。Banner 建议 1600×640 以上横图。
+- **Hero 轮播**：图片放 `public/images/hero/`（建议 1920 宽 WebP），在
+  `src/config.ts` → `hero.images` 里增删路径即可；每次打开网站随机从其中
+  一张开始，之后自动轮播，底部渐变遮罩保证标题可读
+- **头像**：替换 `public/images/avatar.jpg`，或改 `avatar` 路径
 
 ### 5. 看板娘
 

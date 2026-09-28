@@ -1,37 +1,42 @@
 ---
 /**
- * 桌面端左侧栏（lg 以上显示）：个人资料卡 + 导航卡 + 标签卡
+ * 桌面端左侧栏（lg 以上显示）：资料卡 + 公告卡 + 分类卡 + 标签卡。
+ * 导航/搜索/调色板/明暗切换已统一收纳进顶部功能栏（Navbar），此处不再重复。
  */
 import { siteConfig } from '../config';
-import { getAllTags, getSortedPosts, tagSlug } from '../utils/posts';
+import {
+  categorySlug,
+  getAllCategories,
+  getAllTags,
+  getSortedPosts,
+  tagSlug,
+} from '../utils/posts';
 import Icon from './Icon.astro';
-import ThemeToggle from './ThemeToggle.astro';
+import Announcement from './Announcement.astro';
 
-const { title, subtitle, author, avatar, nav, social } = siteConfig;
-const current = Astro.url.pathname.replace(/\/$/, '') || '/';
-const isActive = (link: string) =>
-  link === '/' ? current === '/' : current.startsWith(link);
+const { subtitle, author, avatar, social } = siteConfig;
 
 const posts = await getSortedPosts();
 const tags = getAllTags(posts).slice(0, 12);
+const cats = getAllCategories(posts).slice(0, 6);
 ---
 
 <aside
-  class="sticky top-6 hidden w-72 shrink-0 flex-col gap-5 self-start lg:flex xl:w-80"
+  class="sticky top-20 hidden w-72 shrink-0 flex-col gap-5 self-start lg:flex 2xl:w-80"
 >
-  <!-- 个人资料卡 -->
+  <!-- 个人资料卡（Shirone 风格：头像大图置顶 + 居中信息） -->
   <section class="card overflow-hidden">
-    <div class="h-20 bg-linear-120 from-primary to-accent"></div>
-    <div class="-mt-10 flex flex-col items-center px-5 pb-5">
-      <img
-        src={avatar}
-        alt={`${author} 的头像`}
-        class="size-20 rounded-full border-4 border-card bg-card shadow-card"
-        width="80"
-        height="80"
-      />
-      <h2 class="mt-2 text-lg font-bold">{author}</h2>
-      <p class="mt-1 text-center text-sm text-muted">{subtitle}</p>
+    <img
+      src={avatar}
+      alt={`${author} 的头像`}
+      class="aspect-square w-full object-cover"
+      width="288"
+      height="288"
+    />
+    <div class="flex flex-col items-center px-5 pb-5 pt-4">
+      <h2 class="text-lg font-bold">{author}</h2>
+      <span class="my-2.5 h-[3px] w-9 rounded-full bg-primary/50"></span>
+      <p class="text-center text-sm leading-relaxed text-muted">{subtitle}</p>
       <div class="mt-3 flex items-center gap-1.5">
         {
           social.map((s) => (
@@ -51,30 +56,33 @@ const tags = getAllTags(posts).slice(0, 12);
     </div>
   </section>
 
-  <!-- 导航卡 -->
-  <section class="card p-3">
-    <nav aria-label="站点导航">
-      <ul class="flex flex-col gap-1">
-        {
-          nav.map((item) => (
-            <li>
-              <a
-                href={item.link}
-                class:list={[
-                  'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all',
-                  isActive(item.link)
-                    ? 'bg-primary/15 text-primary'
-                    : 'text-muted hover:translate-x-1 hover:bg-primary/10 hover:text-primary',
-                ]}
-              >
-                <Icon name={item.icon} class="size-4.5" />
-                {item.text}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </nav>
+  <!-- 公告卡 -->
+  <Announcement />
+
+  <!-- 分类卡 -->
+  <section class="card p-5">
+    <div class="mb-3 flex items-center justify-between">
+      <h3 class="text-sm font-bold">✧ 分类</h3>
+      <a href="/categories" class="text-xs text-muted hover:text-primary"
+        >全部 →</a
+      >
+    </div>
+    <ul class="flex flex-col gap-0.5">
+      {
+        cats.map(([c, count]) => (
+          <li>
+            <a
+              href={`/categories/${categorySlug(c)}`}
+              class="group flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-muted transition-colors hover:bg-primary/10 hover:text-primary"
+            >
+              <Icon name="folder" class="size-4 shrink-0" />
+              <span class="flex-1 truncate">{c}</span>
+              <span class="text-xs opacity-60">{count}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
   </section>
 
   <!-- 标签卡 -->
@@ -96,9 +104,4 @@ const tags = getAllTags(posts).slice(0, 12);
       }
     </div>
   </section>
-
-  <!-- 主题切换 -->
-  <div class="flex justify-center">
-    <ThemeToggle />
-  </div>
 </aside>

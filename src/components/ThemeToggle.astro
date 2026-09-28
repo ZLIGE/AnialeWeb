@@ -12,17 +12,18 @@ import Icon from './Icon.astro';
 </button>
 
 <script>
-  // 组件可能被渲染多份（移动端导航栏 + 桌面侧栏），逐一绑定
-  document.querySelectorAll('.theme-toggle').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const root = document.documentElement;
-      const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
-      root.dataset.theme = next;
-      try {
-        localStorage.setItem('theme', next);
-      } catch {
-        /* 隐私模式下忽略 */
-      }
-    });
+  // 事件委托：绑定一次即可在视图过渡换页后继续对新的按钮生效
+  document.addEventListener('click', (e) => {
+    const btn =
+      e.target instanceof Element ? e.target.closest('.theme-toggle') : null;
+    if (!btn) return;
+    const root = document.documentElement;
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    try {
+      localStorage.setItem('theme', next);
+    } catch {
+      /* 隐私模式下忽略 */
+    }
   });
 </script>

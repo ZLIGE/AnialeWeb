@@ -1,7 +1,12 @@
 ---
 /**
- * 文章目录：sticky 侧栏变体（xl 以上）+ 折叠卡片变体（xl 以下）
- * 高亮由 IntersectionObserver 驱动，滚动到对应标题时点亮。
+ * 文章目录（Firefly 递进包裹风格）：
+ * - 顶层标题（h2）使用顺序编号徽章（1、2、3…），同一标题下的子标题
+ *   （h3/h4）改为小圆点并按层级缩进
+ * - 滚动高亮时，当前条目整行以圆角底色包裹；若当前条目位于某个分支
+ *   （带子级的 h2/h3）内，该分支整体获得一层更淡的圆角底色把子条目
+ *   「包」进去，形成递进包裹的层次感
+ * - sticky 侧栏变体（xl 以上）+ 折叠卡片变体（xl 以下）
  */
 import Icon from './Icon.astro';
 
@@ -17,51 +22,120 @@ interface Props {
 }
 
 const { headings, variant = 'sticky' } = Astro.props;
-const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
+const flat = headings.filter((h) => h.depth >= 2 && h.depth <= 4);
+
+// 组树：h2 为编号分支，h3/h4 为圆点子级并按层级挂靠；编号只在 h2 上连续递增
+interface TocNode extends Heading {
+  num: number | null;
+  children: TocNode[];
+}
+let seq = 0;
+const tree: TocNode[] = [];
+let cur2: TocNode | null = null;
+let cur3: TocNode | null = null;
+for (const h of flat) {
+  const node: TocNode = { ...h, num: null, children: [] };
+  if (h.depth <= 2) {
+    node.num = ++seq;
+    tree.push(node);
+    cur2 = node;
+    cur3 = null;
+  } else if (h.depth === 3) {
+    if (cur2) cur2.children.push(node);
+    else tree.push(node);
+    cur3 = node;
+  } else {
+    if (cur3) cur3.children.push(node);
+    else if (cur2) cur2.children.push(node);
+    else tree.push(node);
+  }
+}
 ---
 
 {
   variant === 'sticky' ? (
     <nav class="card p-5" aria-label="文章目录">
-      <h3 class="mb-3 flex items-center gap-2 text-sm font-bold text-muted">
-        <Icon name="list" class="size-4" /> 目录
+      <h3 class="toc-header mb-3 flex items-center gap-2 text-sm font-bold">
+        <span class="h-4 w-1 rounded-full bg-primary" />
+        文章目录
       </h3>
-      <ul class="flex flex-col gap-1 border-l border-line text-sm">
-        {toc.map((h) => (
-          <li>
-            <a
-              href={`#${h.slug}`}
-              data-toc-link
-              class:list={[
-                '-ml-px block border-l-2 border-transparent py-1 text-muted transition-colors hover:text-primary',
-                h.depth === 2 ? 'pl-4' : 'pl-8 text-[0.82rem]',
-              ]}
-            >
-              {h.text}
+      <ul class="toc-tree flex flex-col gap-0.5">
+        <li class="toc-indicator" aria-hidden="true"></li>
+        {tree.map((node) => (
+          <li data-toc-branch={node.children.length > 0 ? '' : undefined}>
+            <a href={`#${node.slug}`} data-toc-link>
+              <span class="toc-num">{node.num}</span>
+              <span class="toc-text">{node.text}</span>
             </a>
+            {node.children.length > 0 && (
+              <ul class="toc-nest">
+                {node.children.map((c) => (
+                  <li data-toc-branch={c.children.length > 0 ? '' : undefined}>
+                    <a href={`#${c.slug}`} data-toc-link>
+                      <span class="toc-dot" />
+                      <span class="toc-text">{c.text}</span>
+                    </a>
+                    {c.children.length > 0 && (
+                      <ul class="toc-nest">
+                        {c.children.map((g) => (
+                          <li>
+                            <a href={`#${g.slug}`} data-toc-link>
+                              <span class="toc-dot" />
+                              <span class="toc-text">{g.text}</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         ))}
       </ul>
     </nav>
   ) : (
     <details class="card group px-5 py-4">
-      <summary class="flex cursor-pointer list-none items-center gap-2 text-sm font-bold text-muted">
-        <Icon name="list" class="size-4" />
-        目录（点击展开）
-        <span class="ml-auto transition-transform group-open:rotate-180">⌄</span>
+      <summary class="flex cursor-pointer list-none items-center gap-2 text-sm font-bold">
+        <span class="h-4 w-1 rounded-full bg-primary" />
+        文章目录
+        <span class="ml-auto transition-transform group-open:rotate-180">
+          <Icon name="chevron-down" class="size-4 text-muted" />
+        </span>
       </summary>
-      <ul class="mt-3 flex flex-col gap-1 border-l border-line text-sm">
-        {toc.map((h) => (
-          <li>
-            <a
-              href={`#${h.slug}`}
-              class:list={[
-                '-ml-px block border-l-2 border-transparent py-1 text-muted transition-colors hover:text-primary',
-                h.depth === 2 ? 'pl-4' : 'pl-8 text-[0.82rem]',
-              ]}
-            >
-              {h.text}
+      <ul class="toc-tree mt-3 flex flex-col gap-0.5">
+        <li class="toc-indicator" aria-hidden="true"></li>
+        {tree.map((node) => (
+          <li data-toc-branch={node.children.length > 0 ? '' : undefined}>
+            <a href={`#${node.slug}`} data-toc-link>
+              <span class="toc-num">{node.num}</span>
+              <span class="toc-text">{node.text}</span>
             </a>
+            {node.children.length > 0 && (
+              <ul class="toc-nest">
+                {node.children.map((c) => (
+                  <li data-toc-branch={c.children.length > 0 ? '' : undefined}>
+                    <a href={`#${c.slug}`} data-toc-link>
+                      <span class="toc-dot" />
+                      <span class="toc-text">{c.text}</span>
+                    </a>
+                    {c.children.length > 0 && (
+                      <ul class="toc-nest">
+                        {c.children.map((g) => (
+                          <li>
+                            <a href={`#${g.slug}`} data-toc-link>
+                              <span class="toc-dot" />
+                              <span class="toc-text">{g.text}</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         ))}
       </ul>
@@ -70,33 +144,249 @@ const toc = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
 }
 
 <style is:global>
-  a[data-toc-link].toc-active {
+  /* 滑动高亮指示条：单个胶囊底色平滑滑到当前行（行本身不做背景交叉渐变，
+     避免快速滚动时新旧两行同时半亮的闪烁感） */
+  .toc-tree {
+    position: relative;
+  }
+  .toc-tree li.toc-indicator {
+    position: absolute;
+    z-index: 0;
+    border-radius: 0.7rem;
+    background: color-mix(in oklch, var(--pr) 12%, transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      top 0.18s cubic-bezier(0.33, 1, 0.68, 1),
+      left 0.18s cubic-bezier(0.33, 1, 0.68, 1),
+      width 0.18s cubic-bezier(0.33, 1, 0.68, 1),
+      height 0.18s cubic-bezier(0.33, 1, 0.68, 1),
+      opacity 0.18s ease;
+  }
+  .toc-tree li.toc-indicator.on {
+    opacity: 1;
+  }
+
+  /* 条目行：编号徽章 / 圆点 + 文本 */
+  .toc-tree a[data-toc-link] {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    border-radius: 0.7rem;
+    padding: 0.32rem 0.55rem;
+    font-size: 0.875rem;
+    color: var(--t-muted);
+    transition: color 0.2s ease;
+  }
+  .toc-tree a[data-toc-link]:hover {
     color: var(--pr);
-    border-left-color: var(--pr);
+  }
+  .toc-tree a[data-toc-link].toc-active {
+    color: var(--pr);
     font-weight: 700;
+  }
+
+  /* 顶层编号徽章（仅 h2） */
+  .toc-tree .toc-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--pr) 14%, transparent);
+    color: var(--pr);
+    font-size: 0.68rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
+  .toc-tree a[data-toc-link].toc-active .toc-num {
+    background: var(--pr);
+    color: #fff;
+  }
+
+  /* 子标题圆点（h3/h4，无编号） */
+  .toc-tree .toc-dot {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 7px;
+    height: 7px;
+    margin-inline: 0.32rem;
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--pr) 40%, transparent);
+    transition: background-color 0.2s ease;
+  }
+  .toc-tree a[data-toc-link]:hover .toc-dot,
+  .toc-tree a[data-toc-link].toc-active .toc-dot {
+    background: var(--pr);
+  }
+
+  .toc-tree .toc-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 递进包裹：活动分支整体一层淡底色，子条目缩进包在其中 */
+  .toc-tree li[data-toc-branch] {
+    border-radius: 1rem;
+    padding: 0.1rem 0.35rem;
+    margin: 0 -0.35rem;
+    transition: background-color 0.25s ease;
+  }
+  .toc-tree li[data-toc-branch].toc-open {
+    background: color-mix(in oklch, var(--pr) 6%, transparent);
+  }
+  .toc-tree .toc-nest {
+    margin: 0.1rem 0 0.15rem 0.95rem;
+    padding-left: 0.45rem;
+    border-left: 2px solid color-mix(in oklch, var(--pr) 22%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+  /* 更深层级：更深的缩进与更小的圆点 */
+  .toc-tree .toc-nest .toc-nest {
+    margin-left: 0.75rem;
+  }
+  .toc-tree .toc-nest .toc-nest .toc-dot {
+    width: 6px;
+    height: 6px;
+    opacity: 0.7;
   }
 </style>
 
 <script>
-  const links = document.querySelectorAll<HTMLAnchorElement>('a[data-toc-link]');
-  if (links.length > 0) {
-    const byId = new Map<string, HTMLAnchorElement>();
-    links.forEach((l) =>
-      byId.set(decodeURIComponent(l.hash.slice(1)), l)
-    );
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            links.forEach((l) => l.classList.remove('toc-active'));
-            byId.get(entry.target.id)?.classList.add('toc-active');
-          }
-        }
-      },
-      { rootMargin: '-80px 0px -72% 0px', threshold: 0 }
-    );
-    document
-      .querySelectorAll('.prose-anime h2[id], .prose-anime h3[id]')
-      .forEach((h) => observer.observe(h));
+  /**
+   * 目录高亮：滚动时按「判定线（视口顶部下方 120px）以上最近的标题」
+   * 计算当前章节，点亮目录项并把其所在分支（祖先 li[data-toc-branch]）
+   * 标记为 toc-open，实现递进包裹效果。
+   */
+  let tocLinks: HTMLAnchorElement[] = [];
+  let headingEls: Element[] = [];
+
+  // 每棵目录树的滑动步进状态：快速滚动时目标可能一次跳过多个条目，
+  // 指示条按顺序逐行经过中间条目（短暂停留），而不是直接跳到目标
+  interface TreeAnim {
+    idx: number;
+    target: number;
+    timer: number;
   }
+  const anims = new WeakMap<HTMLElement, TreeAnim>();
+  const STEP_MS = 80;
+
+  function placeIndicator(
+    ind: HTMLElement,
+    link: HTMLAnchorElement | undefined
+  ) {
+    if (!link) return;
+    ind.style.top = `${link.offsetTop}px`;
+    ind.style.left = `${link.offsetLeft}px`;
+    ind.style.width = `${link.offsetWidth}px`;
+    ind.style.height = `${link.offsetHeight}px`;
+  }
+
+  function updateTocHighlight() {
+    if (tocLinks.length === 0 || headingEls.length === 0) return;
+    // 判定线在「页面中间偏下」：标题滑到这个位置时进度条就滑到该条目，
+    // 而不是等标题贴近视口顶部才切换，进度感与阅读位置同步
+    const line = window.innerHeight * 0.55;
+    let currentId: string | null = null;
+    for (const h of headingEls) {
+      if (h.getBoundingClientRect().top <= line) currentId = h.id;
+      else break;
+    }
+    // 判定线以上还没有任何标题（文章开头）时点亮第一项
+    if (!currentId) currentId = headingEls[0].id;
+    // 划到页面底部时强制点亮最后一项：尾部内容不足一屏时，
+    // 最后一个标题永远到不了判定线，高亮会停在倒数第二项
+    const doc = document.documentElement;
+    if (
+      window.innerHeight + Math.round(window.scrollY) >=
+      doc.scrollHeight - 2
+    ) {
+      currentId = headingEls[headingEls.length - 1].id;
+    }
+    let activeLink: HTMLAnchorElement | null = null;
+    tocLinks.forEach((l) => {
+      const active = decodeURIComponent(l.hash.slice(1)) === currentId;
+      l.classList.toggle('toc-active', active);
+      if (active) activeLink = l;
+    });
+
+    // 滑动指示条：每个可见的目录树各一根，逐段步进滑向当前行
+    document.querySelectorAll<HTMLElement>('.toc-tree').forEach((tree) => {
+      if (tree.offsetParent === null) return; // 隐藏中的变体（折叠未展开等）跳过
+      const ind = tree.querySelector<HTMLElement>('.toc-indicator');
+      if (!ind) return;
+      const links = Array.from(
+        tree.querySelectorAll<HTMLAnchorElement>('a[data-toc-link]')
+      );
+      const activeInTree = links.find((l) => l.classList.contains('toc-active'));
+      if (!activeInTree) {
+        ind.classList.remove('on');
+        return;
+      }
+      const target = links.indexOf(activeInTree);
+      let st = anims.get(tree);
+      if (!st) {
+        // 首次定位：直接落位，不做步进动画
+        st = { idx: target, target, timer: 0 };
+        anims.set(tree, st);
+        placeIndicator(ind, links[st.idx]);
+      } else if (st.target !== target) {
+        st.target = target;
+        window.clearTimeout(st.timer);
+        const stepFn = () => {
+          if (!st || st.idx === st.target) return;
+          st.idx += Math.sign(st.target - st.idx);
+          placeIndicator(ind, links[st.idx]);
+          if (st.idx !== st.target) {
+            st.timer = window.setTimeout(stepFn, STEP_MS);
+          }
+        };
+        if (st.idx !== st.target) st.timer = window.setTimeout(stepFn, 30);
+      }
+      ind.classList.add('on');
+    });
+
+    // 递进包裹：清空旧分支标记，把活动项的所有祖先分支点亮
+    document
+      .querySelectorAll('li[data-toc-branch].toc-open')
+      .forEach((li) => li.classList.remove('toc-open'));
+    let el: HTMLElement | null = activeLink?.parentElement ?? null;
+    while (el && !el.classList.contains('toc-tree')) {
+      if (el.tagName === 'LI' && el.hasAttribute('data-toc-branch')) {
+        el.classList.add('toc-open');
+      }
+      el = el.parentElement;
+    }
+  }
+
+  function initToc() {
+    tocLinks = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>('a[data-toc-link]')
+    );
+    headingEls = Array.from(
+      document.querySelectorAll('.prose-anime h2[id], .prose-anime h3[id], .prose-anime h4[id]')
+    );
+    updateTocHighlight();
+    if (!(window as unknown as { __tocScrollBound?: boolean }).__tocScrollBound) {
+      (window as unknown as { __tocScrollBound: boolean }).__tocScrollBound = true;
+      window.addEventListener('scroll', updateTocHighlight, { passive: true });
+      window.addEventListener('resize', updateTocHighlight);
+      // 折叠目录展开（details toggle 不冒泡，用捕获）后重新定位指示条
+      document.addEventListener('toggle', updateTocHighlight, true);
+    }
+  }
+
+  initToc();
+  document.addEventListener('astro:page-load', initToc);
 </script>

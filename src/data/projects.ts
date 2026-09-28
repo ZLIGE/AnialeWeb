@@ -13,7 +13,7 @@ export interface Project {
 
 export const projects: Project[] = [
   {
-    name: '星梦小筑',
+    name: 'Ashen',
     icon: '🌸',
     description:
       '你正在看的这个网站！Astro + Tailwind 打造的梦幻紫二次元博客，自带樱花飘落与看板娘。',

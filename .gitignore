@@ -8,7 +8,13 @@ dist/
 # ZCode 工作区状态
 .zcode/
 
+# 根目录的视频原片不入库（工程使用的视频在 public/videos/）
+/*.mp4
+
 # 日志与系统文件
 *.log
 .DS_Store
 Thumbs.db
+
+# 调色前的原片（不进仓库）
+/originals/

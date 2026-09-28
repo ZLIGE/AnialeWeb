@@ -3,49 +3,53 @@
 /* ── 暗色模式跟随 data-theme 属性（由 ThemeToggle / 系统偏好控制） ── */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
-/* ════════════════ 设计令牌 · 梦幻紫 ════════════════ */
+/* ════════════════ 设计令牌 · 梦幻紫（色相可被调色板切换） ════════════════ */
 :root {
+  /* 主色相 / 点缀色相：调色板组件运行时覆盖这两个变量即可全站换色 */
+  --hue: 295;
+  --hue2: 345;
+
   /* 主色：紫罗兰；点缀色：樱花粉 */
-  --pr: oklch(0.58 0.19 295);
-  --pr-deep: oklch(0.5 0.2 295);
-  --accent: oklch(0.66 0.2 345);
+  --pr: oklch(0.58 0.19 var(--hue));
+  --pr-deep: oklch(0.5 0.2 var(--hue));
+  --accent: oklch(0.66 0.2 var(--hue2));
 
-  --bg: oklch(0.962 0.014 305);
-  --card: oklch(0.995 0.003 310);
-  --card-t: oklch(0.995 0.003 310 / 0.86);
-  --t-main: oklch(0.28 0.035 300);
-  --t-muted: oklch(0.5 0.03 300);
-  --line: oklch(0.89 0.025 305);
+  --bg: oklch(0.962 0.014 var(--hue));
+  --card: oklch(0.995 0.003 var(--hue));
+  --card-t: oklch(0.995 0.003 var(--hue) / 0.86);
+  --t-main: oklch(0.28 0.035 var(--hue));
+  --t-muted: oklch(0.5 0.03 var(--hue));
+  --line: oklch(0.89 0.025 var(--hue));
 
-  /* 背景光斑 */
-  --glow-a: oklch(0.75 0.12 300 / 0.3);
-  --glow-b: oklch(0.78 0.14 345 / 0.24);
+  /* 背景光斑（--glow-c 为固定辅助蓝，营造层次） */
+  --glow-a: oklch(0.75 0.12 var(--hue) / 0.3);
+  --glow-b: oklch(0.78 0.14 var(--hue2) / 0.24);
   --glow-c: oklch(0.8 0.1 260 / 0.18);
 
-  --shadow-card: 0 8px 30px oklch(0.55 0.15 300 / 0.1);
-  --shadow-card-hover: 0 16px 44px oklch(0.55 0.15 300 / 0.2);
-  --shadow-nav: 0 4px 20px oklch(0.55 0.15 300 / 0.08);
+  --shadow-card: 0 8px 30px oklch(0.55 0.15 var(--hue) / 0.1);
+  --shadow-card-hover: 0 16px 44px oklch(0.55 0.15 var(--hue) / 0.2);
+  --shadow-nav: 0 4px 20px oklch(0.55 0.15 var(--hue) / 0.08);
 }
 
 [data-theme='dark'] {
-  --pr: oklch(0.78 0.12 295);
-  --pr-deep: oklch(0.68 0.16 295);
-  --accent: oklch(0.78 0.12 345);
+  --pr: oklch(0.78 0.12 var(--hue));
+  --pr-deep: oklch(0.68 0.16 var(--hue));
+  --accent: oklch(0.78 0.12 var(--hue2));
 
-  --bg: oklch(0.185 0.035 295);
-  --card: oklch(0.243 0.04 295);
-  --card-t: oklch(0.243 0.04 295 / 0.86);
-  --t-main: oklch(0.92 0.015 305);
-  --t-muted: oklch(0.7 0.025 300);
-  --line: oklch(0.36 0.05 295);
+  --bg: oklch(0.185 0.035 var(--hue));
+  --card: oklch(0.243 0.04 var(--hue));
+  --card-t: oklch(0.243 0.04 var(--hue) / 0.86);
+  --t-main: oklch(0.92 0.015 var(--hue));
+  --t-muted: oklch(0.7 0.025 var(--hue));
+  --line: oklch(0.36 0.05 var(--hue));
 
-  --glow-a: oklch(0.55 0.12 295 / 0.22);
-  --glow-b: oklch(0.55 0.14 345 / 0.16);
+  --glow-a: oklch(0.55 0.12 var(--hue) / 0.22);
+  --glow-b: oklch(0.55 0.14 var(--hue2) / 0.16);
   --glow-c: oklch(0.5 0.1 260 / 0.16);
 
-  --shadow-card: 0 8px 30px oklch(0.1 0.05 295 / 0.4);
-  --shadow-card-hover: 0 16px 44px oklch(0.1 0.05 295 / 0.55);
-  --shadow-nav: 0 4px 20px oklch(0.1 0.05 295 / 0.35);
+  --shadow-card: 0 8px 30px oklch(0.1 0.05 var(--hue) / 0.4);
+  --shadow-card-hover: 0 16px 44px oklch(0.1 0.05 var(--hue) / 0.55);
+  --shadow-nav: 0 4px 20px oklch(0.1 0.05 var(--hue) / 0.35);
 }
 
 /* 把变量映射进 Tailwind，生成 bg-card / text-muted 等工具类 */
@@ -69,10 +73,39 @@
   --radius-card: 1.25rem;
 }
 
+/* ════════════════ 视图过渡动画：旧快照溶解显露新快照 ════════════════
+   新快照必须保持完全不透明垫底、只淡出旧快照——若两者同时半透明，
+   过渡中页面背景会透出来，明亮主题下整页发灰闪烁 */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: vt-fade-out 0.16s ease both;
+  }
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
 /* ════════════════ 基础 ════════════════ */
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* 常驻滚动条：不同高度页面间切换时视口宽度恒定，
+       避免内容列与固定定位元素（看板娘等）左右跳动 */
+    overflow-y: scroll;
+    /* 背景色上提到 html：视图过渡交叉淡化期间不露出白色底（暗色模式白闪的根源） */
+    background-color: var(--bg);
+    color-scheme: light;
+  }
+
+  [data-theme='dark'],
+  :root[data-theme='dark'] {
+    color-scheme: dark;
   }
 
   body {
@@ -99,7 +132,7 @@
   }
 
   ::selection {
-    background: oklch(0.7 0.15 300 / 0.35);
+    background: oklch(0.7 0.15 var(--hue) / 0.35);
   }
 
   /* 细窄紫色滚动条 */
@@ -341,6 +374,95 @@
 }
 [data-theme='dark'] .astro-code span {
   color: var(--shiki-dark);
+}
+
+/* ════════════════ 调色板运行时设置（壁纸模式 / 横幅选项 / 首页布局） ════════════════
+   由 PaletteSwitcher 写入 <html> 的 data 属性，BaseLayout 头部脚本首帧前恢复 */
+
+/* 全屏模式：Hero 占满整个首屏 */
+[data-hero-mode='full'] #hero {
+  height: 100dvh;
+  max-height: none;
+  min-height: 100dvh;
+}
+
+/* 覆盖模式：Hero 固定为全页背景，内容浮层从其上滚过 */
+[data-hero-mode='cover'] .hero-slot {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+[data-hero-mode='cover'] .hero-slot #hero {
+  height: 100%;
+  max-height: none;
+  min-height: 0;
+}
+[data-hero-mode='cover'] .site-container {
+  position: relative;
+  z-index: 1;
+  /* Hero 已不在文档流内，顶部内边距回到导航栏高度 */
+  padding-top: 5rem !important;
+}
+
+/* 隐藏壁纸：不显示 Hero，内容直达 */
+[data-hero-mode='hidden'] .hero-slot {
+  display: none;
+}
+[data-hero-mode='hidden'] .site-container {
+  padding-top: 5rem !important;
+}
+
+/* 横幅标题开关 */
+[data-hero-title='off'] [data-hero-caption] {
+  display: none;
+}
+
+/* 首页网格布局：卡片改为上图下文的竖排双列（窄屏仍单列） */
+@media (min-width: 640px) {
+  /* 网格 = Shirone 式双列瀑布流：卡片按内容自适应高度，
+     后卡紧贴前卡（column-fill 平衡两列，break-inside 防止卡片被拆分） */
+  [data-home-layout='grid'] .post-list {
+    columns: 2;
+    column-gap: 1.5rem;
+    display: block;
+  }
+  [data-home-layout='grid'] .post-list > article {
+    break-inside: avoid;
+    margin: 0 0 1.25rem;
+  }
+  [data-home-layout='grid'] .post-list .post-card-inner {
+    flex-direction: column;
+  }
+  [data-home-layout='grid'] .post-list .post-card-cover {
+    display: block;
+    order: -1;
+    width: 100%;
+    height: 11rem;
+    align-self: stretch;
+  }
+  [data-home-layout='grid'] .post-list .post-card-arrow {
+    inset: 0 0 auto 0;
+    width: 100%;
+    height: 11rem;
+    justify-content: center;
+  }
+  /* 无封面卡片：箭头成为右侧独立竖列（四周留边），文字预留右侧空间不遮挡 */
+  [data-home-layout='grid'] .post-list .post-card-text-plain {
+    padding-right: 4.25rem;
+  }
+  [data-home-layout='grid'] .post-list .post-card-arrow-plain {
+    top: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    left: auto; /* 覆盖 .post-card-arrow 的 left:0，否则 left+width 同设时 right 失效 */
+    height: auto; /* 覆盖 .post-card-arrow 的 height:11rem，让箭头随卡片内容居中 */
+    width: 2.75rem;
+    padding-right: 0;
+  }
+  [data-home-layout='grid'] .post-list .post-card-arrow-capsule {
+    height: 100%;
+    width: 100%;
+  }
 }
 
 /* ════════════════ 动效偏好 ════════════════ */

@@ -7,6 +7,10 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://example.com',
   integrations: [sitemap()],
+  // 关闭开发模式的底部调试工具条（Astro Dev Toolbar）
+  devToolbar: {
+    enabled: false,
+  },
   markdown: {
     shikiConfig: {
       // 代码块双主题：亮色拿铁 / 暗色摩卡，随站点明暗模式切换

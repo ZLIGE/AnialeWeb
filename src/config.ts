@@ -16,11 +16,11 @@ export interface SocialItem {
 
 export const siteConfig = {
   /** 站点名称（浏览器标题、侧栏、页脚都会用到） */
-  title: '星梦小筑',
+  title: 'Ashen',
   /** 副标题 / 一句话签名，展示在 Banner 与侧栏 */
   subtitle: '记录代码、动画与梦境的小站 ✨',
   /** 你的名字 */
-  author: '星梦',
+  author: 'Aniale',
   /** 站点描述（SEO / RSS 用） */
   description: '一个梦幻紫风格的二次元个人小站，写写代码、看看番、发发呆。',
   /** 站点语言 */
@@ -28,11 +28,32 @@ export const siteConfig = {
   /** 头像图片，放在 public/ 下（可替换为自己的图片） */
   avatar: '/images/avatar.jpg',
 
-  /** 首页 Banner：替换 image 为自己的图片即可（建议 1600×640 以上） */
-  banner: {
-    image: '/images/banner.svg',
-    /** 图片上的遮罩透明度 0~1，图片太亮时可调大 */
-    overlay: 0.45,
+  /**
+   * 首页顶部 Hero 大图轮播：每次打开网站随机从其中一张开始，
+   * 之后自动轮播。图片放在 public/images/hero/（1920 宽 WebP），
+   * 增删数组元素即可调整轮播池。
+   */
+  hero: {
+    images: [
+      '/images/hero/hero-01.webp',
+      '/images/hero/hero-02.webp',
+      '/images/hero/hero-03.webp',
+      '/images/hero/hero-04.webp',
+      '/images/hero/hero-05.webp',
+    ],
+    /** 轮播间隔（毫秒） */
+    interval: 6000,
+    /** 底部渐变遮罩强度 0~1（保证标题文字可读） */
+    overlay: 0.5,
+    /**
+     * 打字机标语：像终端一样逐字打出、停留、删除后换下一条循环。
+     * 留空 [] 则静态显示 subtitle。
+     */
+    taglines: [
+      '记录代码、动画与梦境的小站 ✨',
+      'In Undreamt Night, I Thence Shine ✦',
+      '写写代码、看看番、发发呆 ✧',
+    ],
   },
 
   /** 导航栏（顺序即显示顺序） */
@@ -54,6 +75,17 @@ export const siteConfig = {
 
   /** 页脚起始年份 */
   since: 2026,
+
+  /** 首页每页文章数（超过该数量自动出现第 2 页与页码分页条） */
+  postsPerPage: 8,
+
+  /**
+   * 首页公告条：text 留空 '' 则不显示；修改文字后，已关闭的公告会重新出现
+   */
+  announcement: {
+    text: '欢迎来到 Ashen！站点刚刚完成改版，支持搜索、分类与评论交流啦 ✨',
+    link: { text: '查看详情', url: '/posts/hello-world' },
+  },
 
   // ── 装饰特效开关 ──────────────────────────────────────────
   effects: {

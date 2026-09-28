@@ -1,7 +1,7 @@
 ---
 import { render } from 'astro:content';
 import type { Post } from '../../utils/posts';
-import { getSortedPosts, formatDate, tagSlug } from '../../utils/posts';
+import { getSortedPosts, formatDate, tagSlug, categorySlug } from '../../utils/posts';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Icon from '../../components/Icon.astro';
 import TableOfContents from '../../components/TableOfContents.astro';
@@ -26,7 +26,7 @@ const newer = index > 0 ? allPosts[index - 1] : undefined;
 const older = index >= 0 && index < allPosts.length - 1 ? allPosts[index + 1] : undefined;
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} hideAside>
   <div class="flex flex-col gap-5">
     <!-- 目录（窄屏折叠卡片） -->
     <div class="xl:hidden">
@@ -47,9 +47,12 @@ const older = index >= 0 && index < allPosts.length - 1 ? allPosts[index + 1] : 
         }
         <div class="p-6 sm:p-8">
           <div class="flex flex-wrap items-center gap-2 text-xs text-muted">
-            <span class="rounded-full bg-primary/12 px-2.5 py-0.5 font-medium text-primary">
+            <a
+              href={`/categories/${categorySlug(category)}`}
+              class="rounded-full bg-primary/12 px-2.5 py-0.5 font-medium text-primary transition-colors hover:bg-primary hover:text-white"
+            >
               {category}
-            </span>
+            </a>
             <span class="inline-flex items-center gap-1">
               <Icon name="calendar" class="size-3.5" />
               发布于 {formatDate(published)}
@@ -89,7 +92,7 @@ const older = index >= 0 && index < allPosts.length - 1 ? allPosts[index + 1] : 
       </article>
 
       <!-- 目录（宽屏侧栏） -->
-      <aside class="sticky top-6 hidden w-64 shrink-0 self-start xl:block">
+      <aside class="sticky top-20 hidden w-64 shrink-0 self-start xl:block">
         <TableOfContents headings={headings} variant="sticky" />
       </aside>
     </div>

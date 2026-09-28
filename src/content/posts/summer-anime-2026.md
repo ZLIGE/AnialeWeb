@@ -2,6 +2,7 @@
 title: 2026 年夏季追番记录与碎碎念
 published: 2026-08-30
 description: 这个夏天追的番、掉的泪与真香时刻，一份迟到的观感小结。
+image: /images/cover-anime.svg
 tags:
   - 追番
   - 二次元

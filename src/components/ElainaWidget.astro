@@ -8,7 +8,7 @@
  */
 ---
 
-<div id="elaina-widget">
+<div id="elaina-widget" transition:persist="elaina">
   <div id="elaina-bubble"></div>
   <div id="elaina-parallax">
     <img
@@ -31,6 +31,9 @@
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
+    /* 容器不拦截点击：立绘透明区域背后的页面内容可正常点击，
+       仅立绘本体（pointer-events: auto）接收拖动与点击 */
+    pointer-events: none;
   }
   @media (max-width: 640px) {
     #elaina-widget {
@@ -138,10 +141,11 @@
     '「呜嘿嘿，被你发现啦。」',
     '「要一起去看星星吗？」',
     '「旅途还在继续，我们下次见。」',
-    '「欢迎来到星梦小筑，旅行者。」',
+    '「欢迎来到 Ashen，旅行者。」',
   ];
 
   // ── 位置记忆恢复 ──────────────────────────────────────────
+  let userMoved = false;
   try {
     const raw = localStorage.getItem(POS_KEY);
     if (raw) {
@@ -153,10 +157,36 @@
         widget.style.top = `${top}px`;
         widget.style.right = 'auto';
         widget.style.bottom = 'auto';
+        userMoved = true;
       }
     }
   } catch {
     /* 忽略损坏的记忆 */
+  }
+
+  // ── 默认停靠位 ────────────────────────────────────────────
+  // 宽屏下右侧「站点信息」栏（统计/日历）是 sticky 的，若看板娘仍贴右下角
+  // 会永久遮住日历卡；无用户拖动记忆时改站到右栏左侧的接缝处。
+  const applyDock = () => {
+    if (userMoved) return;
+    const aside = document.querySelector<HTMLElement>(
+      'aside[aria-label="站点信息"]'
+    );
+    if (aside && aside.offsetWidth > 0) {
+      widget.style.right = `${
+        window.innerWidth - aside.getBoundingClientRect().left + 6
+      }px`;
+    } else {
+      // 窄屏 / 无右栏页面：回到 CSS 默认（桌面 14px，移动端 8px）
+      widget.style.right = '';
+    }
+    widget.style.left = 'auto';
+    widget.style.top = 'auto';
+    widget.style.bottom = '0';
+  };
+  if (!userMoved) {
+    applyDock();
+    window.addEventListener('resize', applyDock);
   }
 
   // ── 长按拖动 ──────────────────────────────────────────────
@@ -192,11 +222,11 @@
     }
     widget.classList.add('dragging');
     document.body.style.userSelect = 'none';
-    try {
-      widget.setPointerCapture(pointerId);
-    } catch {
-      /* 合成事件或指针已释放时忽略 */
-    }
+      try {
+        figure.setPointerCapture(pointerId);
+      } catch {
+        /* 合成事件或指针已释放时忽略 */
+      }
   };
 
   figure.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -247,6 +277,7 @@
         // 拦截拖动结束的点击，避免误触台词
         e.preventDefault();
         e.stopPropagation();
+        userMoved = true;
         try {
           localStorage.setItem(
             POS_KEY,

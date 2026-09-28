@@ -1,0 +1,82 @@
+---
+/**
+ * 站点统计卡（右侧栏）：文章 / 分类 / 标签 / 总字数 / 运行天数 / 最后活动。
+ * 全部在构建期计算；总字数读取文章原始 Markdown，剥离标记后按
+ * 「CJK 字符数 + 西文单词数」统计。部署后重新构建即自动更新。
+ */
+import Icon from './Icon.astro';
+import { getSortedPosts, getAllCategories, getAllTags } from '../utils/posts';
+
+const posts = await getSortedPosts();
+const cats = await getAllCategories(posts);
+const tags = await getAllTags(posts);
+
+const rawModules = import.meta.glob('../content/posts/*.{md,mdx}', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>;
+
+const countWords = (raw: string) => {
+  const text = raw
+    .replace(/^---[\s\S]*?---/, '') // frontmatter
+    .replace(/```[\s\S]*?```/g, ' ') // 代码块
+    .replace(/`[^`\n]*`/g, ' ') // 行内代码
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ') // 图片
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // 链接保留文字
+    .replace(/<[^>]+>/g, ' ') // 内联 HTML
+    .replace(/[#>*_~|]/g, ' '); // Markdown 记号
+  const cjk = (text.match(/[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]/g) ?? [])
+    .length;
+  const latin = (
+    text
+      .replace(/[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]/g, ' ')
+      .match(/[A-Za-z0-9]+/g) ?? []
+  ).length;
+  return cjk + latin;
+};
+
+const totalWords = Object.values(rawModules).reduce(
+  (sum, raw) => sum + countWords(raw),
+  0
+);
+
+const DAY = 24 * 60 * 60 * 1000;
+const dates = posts.map((p) => p.data.published.getTime());
+const today = Date.now();
+const first = dates.length ? Math.min(...dates) : today;
+const last = dates.length ? Math.max(...dates) : today;
+const daysRunning = Math.max(1, Math.floor((today - first) / DAY) + 1);
+const gapDays = Math.floor((today - last) / DAY);
+const lastActivity = gapDays <= 0 ? '今天' : `${gapDays} 天前`;
+
+const stats = [
+  { icon: 'file-text', label: '文章数', value: String(posts.length) },
+  { icon: 'folder', label: '分类数', value: String(cats.length) },
+  { icon: 'tag', label: '标签数', value: String(tags.length) },
+  {
+    icon: 'edit',
+    label: '总字数',
+    value: totalWords.toLocaleString('zh-CN'),
+  },
+  { icon: 'calendar', label: '运行天数', value: `${daysRunning} 天` },
+  { icon: 'activity', label: '最后活动', value: lastActivity },
+];
+---
+
+<section class="card p-5" aria-label="站点统计">
+  <h3 class="mb-4 text-sm font-bold">✧ 站点统计</h3>
+  <ul class="flex flex-col gap-2.5 text-sm">
+    {
+      stats.map((s) => (
+        <li class="flex items-center justify-between gap-2">
+          <span class="flex min-w-0 items-center gap-2 text-muted">
+            <Icon name={s.icon} class="size-4 shrink-0 text-primary" />
+            <span class="truncate">{s.label}</span>
+          </span>
+          <span class="shrink-0 font-bold tabular-nums">{s.value}</span>
+        </li>
+      ))
+    }
+  </ul>
+</section>

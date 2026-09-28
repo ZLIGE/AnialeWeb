@@ -38,3 +38,8 @@ export function getAllCategories(posts: Post[]): [string, number][] {
 export function tagSlug(tag: string): string {
   return encodeURIComponent(tag);
 }
+
+/** 通过分类路径生成 URL 编码后的 slug */
+export function categorySlug(category: string): string {
+  return encodeURIComponent(category);
+}

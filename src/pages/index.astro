@@ -1,27 +1,33 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Banner from '../components/Banner.astro';
+import Hero from '../components/Hero.astro';
 import PostCard from '../components/PostCard.astro';
 import Pagination from '../components/Pagination.astro';
 import { getSortedPosts } from '../utils/posts';
+import { siteConfig } from '../config';
 
-const POSTS_PER_PAGE = 8;
+const postsPerPage = siteConfig.postsPerPage;
 
 const posts = await getSortedPosts();
-const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
-const pagePosts = posts.slice(0, POSTS_PER_PAGE);
+const totalPages = Math.ceil(posts.length / postsPerPage);
+const pagePosts = posts.slice(0, postsPerPage);
 ---
 
-<BaseLayout>
+<BaseLayout hero>
+  <Fragment slot="hero">
+    <Hero />
+  </Fragment>
   <div class="flex flex-col gap-5">
-    <Banner />
     <h2 class="card px-5 py-3.5 text-lg font-bold">
       ✧ 最近的文章
       <span class="ml-1.5 text-sm font-normal text-muted"
         >（共 {posts.length} 篇）</span
       >
     </h2>
-    {pagePosts.map((post) => <PostCard post={post} />)}
+    <!-- post-list：调色板「布局」在网格模式下将其切换为双列网格（global.css） -->
+    <div class="post-list flex flex-col gap-5">
+      {pagePosts.map((post) => <PostCard post={post} />)}
+    </div>
     <Pagination current={1} total={totalPages} />
   </div>
 </BaseLayout>

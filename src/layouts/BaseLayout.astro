@@ -10,30 +10,43 @@ import 'lxgw-wenkai-webfont/lxgwwenkai-bold.css';
 import '../styles/global.css';
 
 import { siteConfig } from '../config';
+import { ClientRouter } from 'astro:transitions';
 import Navbar from '../components/Navbar.astro';
 import Sidebar from '../components/Sidebar.astro';
 import Footer from '../components/Footer.astro';
 import Sakura from '../components/Sakura.astro';
 import ElainaWidget from '../components/ElainaWidget.astro';
 import Live2DWidget from '../components/Live2DWidget.astro';
+import BackToTop from '../components/BackToTop.astro';
+import SearchModal from '../components/SearchModal.astro';
+import Announcement from '../components/Announcement.astro';
+import SiteStats from '../components/SiteStats.astro';
+import CalendarCard from '../components/CalendarCard.astro';
 
 interface Props {
   /** 页面标题（自动拼接站点名） */
   title?: string;
   description?: string;
+  /** 页面顶部为全宽 Hero 大图（导航栏悬浮其上，首页使用） */
+  hero?: boolean;
+  /** 隐藏右侧信息栏（文章详情页的右侧让位给目录） */
+  hideAside?: boolean;
 }
 
-const { title, description = siteConfig.description } = Astro.props;
+const { title, description = siteConfig.description, hero = false, hideAside = false } =
+  Astro.props;
 const pageTitle = title ? `${title} · ${siteConfig.title}` : siteConfig.title;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang={siteConfig.locale.split('-')[0]}>
+<html lang={siteConfig.locale.split('-')[0]} data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+    <!-- 视图过渡路由：站点内导航无刷新换页，消除整页重载的样式闪烁与跳动 -->
+    <ClientRouter />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <meta name="author" content={siteConfig.author} />
@@ -47,39 +60,131 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={new URL(siteConfig.banner.image, Astro.site)} />
+    <meta
+      property="og:image"
+      content={new URL(siteConfig.hero.images[0], Astro.site)}
+    />
     <meta property="og:site_name" content={siteConfig.title} />
 
-    <!-- 明暗模式初始化（内联执行，避免闪烁） -->
+    <!-- 主题初始化：默认暗黑，记住用户手动选择；
+         astro:after-swap 后重新应用做兜底 -->
     <script is:inline>
       (() => {
-        let theme;
-        try {
-          theme = localStorage.getItem('theme');
-        } catch {}
-        if (theme !== 'light' && theme !== 'dark') {
-          theme = matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'dark'
-            : 'light';
-        }
-        document.documentElement.dataset.theme = theme;
+        const applyTheme = () => {
+          let theme;
+          try {
+            theme = localStorage.getItem('theme');
+          } catch {}
+          if (theme !== 'light' && theme !== 'dark') {
+            theme = 'dark';
+          }
+          document.documentElement.dataset.theme = theme;
+        };
+        applyTheme();
+        document.addEventListener('astro:after-swap', applyTheme);
       })();
+    </script>
+    <!-- 调色板恢复（首帧前应用 + 换页后重新应用，无闪烁） -->
+    <script is:inline>
+      (() => {
+        const get = (key, fallback) => {
+          try {
+            return localStorage.getItem(key) || fallback;
+          } catch {
+            return fallback;
+          }
+        };
+        const applyPalette = () => {
+          try {
+            const p = JSON.parse(localStorage.getItem('palette'));
+            if (p && typeof p.hue === 'number') {
+              document.documentElement.style.setProperty('--hue', p.hue);
+              document.documentElement.style.setProperty('--hue2', p.hue2);
+            }
+          } catch {}
+        };
+        // 外观面板的运行时设置（壁纸模式 / 横幅选项 / 首页布局）
+        const applySettings = () => {
+          const doc = document.documentElement;
+          doc.setAttribute('data-hero-mode', get('hero-mode', 'banner'));
+          doc.setAttribute('data-hero-title', get('hero-title', 'on'));
+          doc.setAttribute('data-hero-ripple', get('hero-ripple', 'on'));
+          doc.setAttribute('data-home-layout', get('home-layout', 'list'));
+        };
+        applyPalette();
+        applySettings();
+        document.addEventListener('astro:after-swap', () => {
+          applyPalette();
+          applySettings();
+        });
+      })();
+    </script>
+    <!-- 关键：换页发生前，把用户当前的主题与调色板同步到即将换入的新文档。
+         否则换页瞬间会应用服务端默认值（暗黑/梦幻紫），亮色用户会看到
+         一帧暗黑闪现。 -->
+    <script is:inline>
+      document.addEventListener('astro:before-swap', (e) => {
+        const cur = document.documentElement;
+        const next = e.newDocument.documentElement;
+        next.dataset.theme = cur.dataset.theme || 'dark';
+        next.style.setProperty('--hue', cur.style.getPropertyValue('--hue'));
+        next.style.setProperty('--hue2', cur.style.getPropertyValue('--hue2'));
+        // 外观面板设置（壁纸模式等）也同步到新文档，防换页闪回默认
+        for (const attr of [
+          'data-hero-mode',
+          'data-hero-title',
+          'data-hero-ripple',
+          'data-home-layout',
+        ]) {
+          const v = cur.getAttribute(attr);
+          if (v) next.setAttribute(attr, v);
+        }
+      });
     </script>
   </head>
 
-  <body>
+  <body data-has-hero={hero ? 'true' : undefined}>
     <Navbar />
 
+    {
+      hero && (
+        <div class="hero-slot relative">
+          <slot name="hero" />
+        </div>
+      )
+    }
+
     <div
-      class="mx-auto flex max-w-[82rem] items-start gap-6 px-4 pb-10 pt-20 sm:px-6 lg:px-8 lg:pt-6"
+      class:list={[
+        'site-container mx-auto flex max-w-[90rem] items-start gap-6 px-4 pb-10 sm:px-6 lg:px-8',
+        hero ? 'pt-6' : 'pt-20',
+      ]}
     >
       <Sidebar />
       <main class="min-w-0 flex-1 py-2 lg:py-6">
+        <!-- 移动端公告（lg 以下侧栏隐藏，公告改挂在内容顶部） -->
+        <div class="mb-5 lg:hidden">
+          <Announcement id="announce-mobile" />
+        </div>
         <slot />
       </main>
+      <!-- 右侧信息栏：站点统计 + 日历（xl 以上显示；hideAside 页面让位给目录） -->
+      {
+        !hideAside && (
+          <aside
+            class="sticky top-20 hidden w-60 shrink-0 flex-col gap-5 self-start xl:flex 2xl:w-64"
+            aria-label="站点信息"
+          >
+            <SiteStats />
+            <CalendarCard />
+          </aside>
+        )
+      }
     </div>
 
     <Footer />
+    <BackToTop />
+    <SearchModal />
     {siteConfig.effects.sakura && <Sakura />}
     {siteConfig.effects.companion === 'elaina' && <ElainaWidget />}
     {siteConfig.effects.companion === 'live2d' && <Live2DWidget />}

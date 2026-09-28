@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1152 648" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b1440"/>
+      <stop offset="0.5" stop-color="#3f2f7c"/>
+      <stop offset="1" stop-color="#a97fd4"/>
+    </linearGradient>
+    <linearGradient id="win" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#322464"/>
+      <stop offset="1" stop-color="#261a4e"/>
+    </linearGradient>
+    <mask id="moon2">
+      <circle cx="985" cy="130" r="46" fill="#fff"/>
+      <circle cx="1008" cy="114" r="42" fill="#000"/>
+    </mask>
+  </defs>
+
+  <rect width="1152" height="648" fill="url(#sky2)"/>
+
+  <!-- 星星 -->
+  <g fill="#fff">
+    <circle cx="90" cy="70" r="2.2" opacity="0.9"/>
+    <circle cx="240" cy="120" r="1.6" opacity="0.65"/>
+    <circle cx="400" cy="55" r="2" opacity="0.85"/>
+    <circle cx="560" cy="90" r="1.5" opacity="0.6"/>
+    <circle cx="700" cy="45" r="1.8" opacity="0.8"/>
+    <circle cx="850" cy="150" r="1.5" opacity="0.6"/>
+    <circle cx="1080" cy="220" r="1.8" opacity="0.8"/>
+    <circle cx="150" cy="250" r="1.5" opacity="0.5"/>
+    <circle cx="620" cy="200" r="1.4" opacity="0.5"/>
+    <circle cx="920" cy="60" r="1.6" opacity="0.7"/>
+  </g>
+  <g fill="#fff">
+    <path d="M180 90 L184 102 L196 106 L184 110 L180 122 L176 110 L164 106 L176 102 Z" opacity="0.9"/>
+    <path d="M760 110 L763 119 L772 122 L763 125 L760 134 L757 125 L748 122 L757 119 Z" opacity="0.85"/>
+    <path d="M480 150 L483 159 L492 162 L483 165 L480 174 L477 165 L471 162 L477 159 Z" opacity="0.7"/>
+  </g>
+
+  <!-- 弯月 -->
+  <circle cx="985" cy="130" r="46" fill="#fff3cf" mask="url(#moon2)"/>
+
+  <!-- 云 -->
+  <ellipse cx="240" cy="420" rx="190" ry="26" fill="#fff" opacity="0.08"/>
+  <ellipse cx="900" cy="480" rx="170" ry="24" fill="#fff" opacity="0.08"/>
+
+  <!-- 代码编辑器窗口 -->
+  <g>
+    <rect x="330" y="150" width="500" height="330" rx="18" fill="url(#win)" stroke="#5a4390" stroke-width="4"/>
+    <rect x="330" y="150" width="500" height="52" rx="18" fill="#3c2a6e"/>
+    <rect x="330" y="184" width="500" height="18" fill="#3c2a6e"/>
+    <circle cx="368" cy="176" r="8" fill="#f2a9d4"/>
+    <circle cx="396" cy="176" r="8" fill="#ffd76e"/>
+    <circle cx="424" cy="176" r="8" fill="#8bd0f0"/>
+    <!-- 代码行 -->
+    <g stroke-linecap="round" stroke-width="14">
+      <line x1="372" y1="250" x2="472" y2="250" stroke="#f2a9d4"/>
+      <line x1="492" y1="250" x2="560" y2="250" stroke="#8bd0f0"/>
+      <line x1="396" y1="292" x2="540" y2="292" stroke="#c9b6ff"/>
+      <line x1="564" y1="292" x2="640" y2="292" stroke="#ffd76e"/>
+      <line x1="420" y1="334" x2="500" y2="334" stroke="#8bd0f0"/>
+      <line x1="520" y1="334" x2="700" y2="334" stroke="#f2a9d4"/>
+      <line x1="396" y1="376" x2="450" y2="376" stroke="#ffd76e"/>
+      <line x1="472" y1="418" x2="560" y2="418" stroke="#c9b6ff"/>
+    </g>
+    <!-- 光标 -->
+    <rect x="576" y="410" width="12" height="17" fill="#fff" opacity="0.9"/>
+  </g>
+
+  <!-- 小火箭 -->
+  <g transform="translate(180 480) rotate(-35)">
+    <path d="M0 -46 C 16 -26 16 6 0 26 C -16 6 -16 -26 0 -46 Z" fill="#e9defc"/>
+    <path d="M0 -46 C 8 -36 12 -22 12 -8 L -12 -8 C -12 -22 -8 -36 0 -46 Z" fill="#f2a9d4"/>
+    <circle cx="0" cy="-10" r="9" fill="#8bd0f0" stroke="#3c2a6e" stroke-width="3"/>
+    <path d="M-13 8 L -30 30 L -10 24 Z" fill="#f2a9d4"/>
+    <path d="M13 8 L 30 30 L 10 24 Z" fill="#f2a9d4"/>
+    <path d="M-6 28 Q 0 46 6 28 Z" fill="#ffd76e"/>
+  </g>
+  <!-- 火箭尾迹 -->
+  <g fill="#fff" opacity="0.7">
+    <circle cx="130" cy="560" r="4"/>
+    <circle cx="148" cy="536" r="3"/>
+    <circle cx="166" cy="514" r="2.5"/>
+  </g>
+</svg>

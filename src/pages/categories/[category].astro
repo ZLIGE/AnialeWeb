@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getSortedPosts } from '../../utils/posts';
+
+export async function getStaticPaths() {
+  const posts = await getSortedPosts();
+  const cats = [...new Set(posts.map((p) => p.data.category))];
+  // params 用原始中文，Astro 自动处理 URL 编码（链接处用 categorySlug() 编码）
+  return cats.map((category) => ({
+    params: { category },
+    props: {
+      category,
+      posts: posts.filter((p) => p.data.category === category),
+    },
+  }));
+}
+
+const { category, posts } = Astro.props;
+---
+
+<BaseLayout
+  title={`分类「${category}」`}
+  description={`分类「${category}」下的所有文章`}
+>
+  <div class="flex flex-col gap-5">
+    <h1 class="card px-5 py-3.5 text-lg font-bold">
+      ✧ 分类「<span class="text-gradient">{category}</span>」
+      <span class="ml-1.5 text-sm font-normal text-muted"
+        >（{posts.length} 篇）</span
+      >
+    </h1>
+    {posts.map((post) => <PostCard post={post} />)}
+  </div>
+</BaseLayout>

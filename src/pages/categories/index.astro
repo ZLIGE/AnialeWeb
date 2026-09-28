@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import { getAllCategories, getSortedPosts } from '../../utils/posts';
+
+const posts = await getSortedPosts();
+const cats = getAllCategories(posts);
+const max = Math.max(...cats.map(([, n]) => n), 1);
+---
+
+<BaseLayout title="分类" description="全部文章分类">
+  <div class="flex flex-col gap-5">
+    <h1 class="card px-5 py-3.5 text-lg font-bold">
+      ✧ 分类
+      <span class="ml-1.5 text-sm font-normal text-muted"
+        >（共 {cats.length} 个）</span
+      >
+    </h1>
+
+    <div class="card divide-y divide-line/60 overflow-hidden p-2">
+      {
+        cats.map(([c, count]) => (
+          <a
+            href={`/categories/${encodeURIComponent(c)}`}
+            class="group flex items-center gap-3 rounded-xl px-3.5 py-3 transition-colors hover:bg-primary/10"
+          >
+            <span class="flex size-9 items-center justify-center rounded-lg bg-primary/12 text-primary">
+              <Icon name="folder" class="size-4.5" />
+            </span>
+            <span class="flex-1 font-medium transition-colors group-hover:text-primary">
+              {c}
+            </span>
+            <span class="h-1.5 w-24 overflow-hidden rounded-full bg-line">
+              <span
+                class="block h-full rounded-full bg-linear-90 from-primary to-accent"
+                style={`width:${(count / max) * 100}%`}
+              />
+            </span>
+            <span class="w-8 text-right text-sm text-muted">{count} 篇</span>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</BaseLayout>

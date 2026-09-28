@@ -9,6 +9,7 @@
 <canvas
   id="sakura-canvas"
   class="pointer-events-none fixed inset-0 z-[60] hidden"
+  transition:persist="sakura"
   aria-hidden="true"
 >
 </canvas>
@@ -73,6 +74,63 @@
         petals = Array.from({ length: count }, () => spawn(true));
       };
 
+      // ── 跨页面状态续接：整页跳转后从原位置继续飘落，不重新随机 ──
+      const STORE_KEY = 'sakura-state';
+      const saveState = () => {
+        try {
+          sessionStorage.setItem(
+            STORE_KEY,
+            JSON.stringify({
+              w: Math.round(width),
+              petals: petals.map((p) => [
+                Math.round(p.x),
+                Math.round(p.y),
+                p.size,
+                Math.round(p.angle * 100) / 100,
+                p.angleVel,
+                p.speedY,
+                p.swayAmp,
+                p.swaySpeed,
+                Math.round(p.phase * 100) / 100,
+                p.opacity,
+                p.hue,
+              ]),
+            })
+          );
+        } catch {
+          /* 存储不可用时忽略 */
+        }
+      };
+      const restoreState = (): Petal[] | null => {
+        try {
+          const s = JSON.parse(sessionStorage.getItem(STORE_KEY) || 'null');
+          if (
+            !s ||
+            Math.abs((s.w || 0) - width) > 60 ||
+            !Array.isArray(s.petals)
+          ) {
+            return null;
+          }
+          return s.petals.map(
+            (a: number[]): Petal => ({
+              x: a[0],
+              y: a[1],
+              size: a[2],
+              angle: a[3],
+              angleVel: a[4],
+              speedY: a[5],
+              swayAmp: a[6],
+              swaySpeed: a[7],
+              phase: a[8],
+              opacity: a[9],
+              hue: a[10],
+            })
+          );
+        } catch {
+          return null;
+        }
+      };
+
       // 樱花瓣：泪滴形 + 顶端 V 形缺刻
       const drawPetal = (p: Petal) => {
         const s = p.size;
@@ -98,8 +156,31 @@
         // 上限 48ms：切回标签页或偶发掉帧时不产生跳变
         const dt = Math.min(now - lastTime, 48);
         lastTime = now;
+        // ── 每帧自检与自愈 ──
+        // 画布位图尺寸被重置（视图过渡搬运元素时可能发生）则立即恢复，
+        // 否则 CSS 拉伸会把花瓣放大成条纹；变换矩阵每帧重置，杜绝污染累积
+        const attrW = Math.round(width * dpr);
+        const attrH = Math.round(height * dpr);
+        if (canvas!.width !== attrW || canvas!.height !== attrH) {
+          canvas!.width = attrW;
+          canvas!.height = attrH;
+        }
+        ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx!.clearRect(0, 0, width, height);
         for (const p of petals) {
+          // 数据自愈：出现非有限值或异常尺寸的花瓣立即重生
+          if (
+            !isFinite(p.x) ||
+            !isFinite(p.y) ||
+            !isFinite(p.size) ||
+            !isFinite(p.phase) ||
+            p.size < 2 ||
+            p.size > 40 ||
+            p.opacity <= 0 ||
+            p.opacity > 1
+          ) {
+            Object.assign(p, spawn(false));
+          }
           p.y += p.speedY * dt;
           p.phase += (p.swaySpeed * dt) / 1000;
           p.angle += (p.angleVel * dt) / 1000;
@@ -113,6 +194,7 @@
 
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
+          saveState();
           running = false;
           cancelAnimationFrame(rafId);
         } else if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -125,11 +207,19 @@
       });
 
       window.addEventListener('resize', resize);
+      window.addEventListener('pagehide', saveState);
       resize();
+      // 同一标签页内翻页：恢复上一页的花瓣位置，视觉上无缝续接
+      const restoredPetals = restoreState();
+      if (restoredPetals && restoredPetals.length === petals.length) {
+        petals = restoredPetals;
+      }
       canvas!.classList.remove('hidden');
       running = true;
       lastTime = performance.now();
       rafId = requestAnimationFrame(step);
+      // 调试句柄：便于外部验证花瓣状态
+      (window as unknown as Record<string, unknown>).__sakura = petals;
     }
   }
 </script>

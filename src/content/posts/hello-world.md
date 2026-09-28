@@ -1,5 +1,5 @@
 ---
-title: 欢迎来到星梦小筑 ✦
+title: 欢迎来到 Ashen ✦
 published: 2026-09-20
 description: 第一次见面，请多关照！这是关于本站的介绍，以及 Markdown 书写效果速览。
 image: /images/banner.svg
@@ -11,7 +11,7 @@ category: 随笔
 
 你好呀，旅人！欢迎降落在这个梦幻紫的小宇宙 🌌
 
-这里是**星梦**的个人小站，用来存放代码笔记、追番碎碎念和一些不切实际的梦。
+这里是**Aniale**的个人小站，用来存放代码笔记、追番碎碎念和一些不切实际的梦。
 站点用 [Astro](https://astro.build) 从零搭建，参考了 Fuwari 主题的布局，
 再撒了一点樱花和一只看板娘进去。
 
@@ -34,7 +34,7 @@ category: 随笔
 const petal = (hue: number) => `hsla(${hue}, 85%, 82%, 0.8)`;
 
 export function greet(name: string): string {
-  return `こんにちは、${name}！欢迎来到星梦小筑 ✦`;
+  return `こんにちは、${name}！欢迎来到 Ashen ✦`;
 }
 ```
 

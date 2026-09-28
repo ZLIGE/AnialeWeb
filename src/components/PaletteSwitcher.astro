@@ -1,0 +1,566 @@
+---
+/**
+ * 外观控制面板（Shirone 风格）：点击导航栏调色盘图标弹出。
+ * - 主题色：连续色相滑条（0-359），实时驱动全站 --hue/--hue2，徽章显示当前色相值
+ * - 壁纸：首页 Hero 的四种展示模式（横幅/全屏/覆盖/隐藏）+ 随机换一张按钮
+ * - 横幅选项：横幅标题开关、水波纹动画开关
+ * - 布局：首页文章列表 列表/网格 两种排布
+ * 全部设置写入 localStorage，BaseLayout 头部脚本在首帧前恢复（无闪烁），
+ * 并同步到 <html> 的 data 属性由 global.css 消费。
+ */
+import Icon from './Icon.astro';
+
+interface Props {
+  direction?: 'up' | 'down';
+}
+
+const { direction = 'up' } = Astro.props;
+---
+
+<div class="palette-root relative">
+  <button
+    class="palette-btn flex size-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-primary/10 hover:text-primary"
+    aria-label="外观设置"
+    title="外观设置 ✧"
+  >
+    <Icon name="palette" class="size-5" />
+  </button>
+
+  <div
+    class:list={[
+      'palette-pop card card-glass invisible absolute right-0 z-50 w-[22rem] max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-6rem)] translate-y-1 scale-[0.97] overflow-y-auto overflow-x-hidden p-4 opacity-0 transition-all duration-200',
+      direction === 'up' ? 'bottom-full mb-3 origin-bottom' : 'top-full mt-3 origin-top',
+    ]}
+  >
+    <!-- 主题色 -->
+    <section>
+      <div class="mb-2.5 flex items-center justify-between">
+        <div class="flex items-center gap-1.5">
+          <h4 class="panel-head">主题色</h4>
+          <button
+            class="reset-btn"
+            data-reset="hue"
+            hidden
+            aria-label="恢复默认主题色"
+            title="恢复默认主题色"
+          >
+            <Icon name="rotate-ccw" class="size-3.5" />
+          </button>
+        </div>
+        <span
+          class="hue-badge rounded-lg bg-primary px-2 py-0.5 text-xs font-bold tabular-nums text-white"
+        >
+          300
+        </span>
+      </div>
+      <input
+        class="hue-slider w-full"
+        type="range"
+        min="0"
+        max="359"
+        step="1"
+        value="295"
+        aria-label="调整主题色相"
+      />
+    </section>
+
+    <!-- 壁纸 -->
+    <section class="mt-4">
+      <div class="mb-2.5 flex items-center gap-1.5">
+        <h4 class="panel-head">壁纸</h4>
+        <button
+          class="reset-btn"
+          data-reset="mode"
+          hidden
+          aria-label="恢复默认壁纸模式"
+          title="恢复默认壁纸模式"
+        >
+          <Icon name="rotate-ccw" class="size-3.5" />
+        </button>
+        <button
+          class="shuffle-btn ml-auto flex size-6.5 items-center justify-center rounded-lg text-muted transition-colors hover:bg-primary/15 hover:text-primary"
+          aria-label="随机换一张壁纸"
+          title="随机换一张"
+        >
+          <Icon name="refresh-cw" class="size-3.5" />
+        </button>
+      </div>
+      <div class="flex flex-col gap-2">
+        <button class="opt-row" data-mode-opt="banner">
+          <Icon name="image" class="size-4.5 shrink-0" />
+          <span>横幅模式</span>
+          <span class="opt-check"><Icon name="check" class="size-3" /></span>
+        </button>
+        <button class="opt-row" data-mode-opt="full">
+          <Icon name="maximize" class="size-4.5 shrink-0" />
+          <span>全屏模式</span>
+          <span class="opt-check"><Icon name="check" class="size-3" /></span>
+        </button>
+        <button class="opt-row" data-mode-opt="cover">
+          <Icon name="layers" class="size-4.5 shrink-0" />
+          <span>覆盖模式</span>
+          <span class="opt-check"><Icon name="check" class="size-3" /></span>
+        </button>
+        <button class="opt-row" data-mode-opt="hidden">
+          <Icon name="eye-off" class="size-4.5 shrink-0" />
+          <span>隐藏壁纸</span>
+          <span class="opt-check"><Icon name="check" class="size-3" /></span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 横幅选项 -->
+    <section class="mt-4">
+      <div class="mb-2.5 flex items-center gap-1.5">
+        <h4 class="panel-head">横幅选项</h4>
+        <button
+          class="reset-btn"
+          data-reset="options"
+          hidden
+          aria-label="恢复默认横幅选项"
+          title="恢复默认横幅选项"
+        >
+          <Icon name="rotate-ccw" class="size-3.5" />
+        </button>
+      </div>
+      <div class="flex flex-col gap-2">
+        <div class="opt-row">
+          <Icon name="type" class="size-4.5 shrink-0" />
+          <span>横幅标题</span>
+          <button
+            class="toggle"
+            data-toggle="hero-title"
+            role="switch"
+            aria-checked="true"
+            aria-label="横幅标题显示开关"
+          >
+            <span class="knob"></span>
+          </button>
+        </div>
+        <div class="opt-row">
+          <Icon name="waves" class="size-4.5 shrink-0" />
+          <span>水波纹动画</span>
+          <button
+            class="toggle"
+            data-toggle="hero-ripple"
+            role="switch"
+            aria-checked="true"
+            aria-label="水波纹动画开关"
+          >
+            <span class="knob"></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 布局 -->
+    <section class="mt-4">
+      <div class="mb-2.5 flex items-center gap-1.5">
+        <h4 class="panel-head">布局</h4>
+        <button
+          class="reset-btn"
+          data-reset="layout"
+          hidden
+          aria-label="恢复默认布局"
+          title="恢复默认布局"
+        >
+          <Icon name="rotate-ccw" class="size-3.5" />
+        </button>
+      </div>
+      <div class="grid grid-cols-2 gap-2.5">
+        <button class="opt-row justify-center" data-layout-opt="list">
+          <Icon name="list" class="size-4.5 shrink-0" />
+          <span>列表</span>
+          <span class="opt-check-inline"><Icon name="check" class="size-3" /></span>
+        </button>
+        <button class="opt-row justify-center" data-layout-opt="grid">
+          <Icon name="grid" class="size-4.5 shrink-0" />
+          <span>网格</span>
+          <span class="opt-check-inline"><Icon name="check" class="size-3" /></span>
+        </button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<style>
+  /* 段落标题：紫色竖条 + 加粗 */
+  .panel-head {
+    display: flex;
+    align-items: center;
+    border-left: 3px solid var(--pr);
+    padding-left: 0.55rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--t-main);
+  }
+
+  /* 恢复默认按钮：设置偏离默认后出现在段标题旁 */
+  .palette-pop :global(.reset-btn) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.55rem;
+    height: 1.55rem;
+    border-radius: 0.5rem;
+    background: color-mix(in oklch, var(--pr) 14%, transparent);
+    color: var(--pr);
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.3s ease;
+  }
+  .palette-pop :global(.reset-btn:hover) {
+    background: color-mix(in oklch, var(--pr) 28%, transparent);
+    transform: rotate(-120deg);
+  }
+  .palette-pop :global(.reset-btn[hidden]) {
+    display: none;
+  }
+
+  /* 色相滑条：彩虹轨道 + 白色圆角滑块 */
+  .hue-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 0.85rem;
+    border-radius: 9999px;
+    outline: none;
+    cursor: pointer;
+    background: linear-gradient(
+      90deg,
+      oklch(0.72 0.17 0),
+      oklch(0.72 0.17 30),
+      oklch(0.75 0.16 60),
+      oklch(0.75 0.15 100),
+      oklch(0.75 0.14 140),
+      oklch(0.75 0.13 180),
+      oklch(0.72 0.13 220),
+      oklch(0.66 0.17 260),
+      oklch(0.62 0.2 295),
+      oklch(0.64 0.19 330),
+      oklch(0.72 0.17 359)
+    );
+  }
+  .hue-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1rem;
+    height: 1.45rem;
+    border: none;
+    border-radius: 0.35rem;
+    background: #fff;
+    box-shadow:
+      0 1px 5px rgba(0, 0, 0, 0.45),
+      inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+    cursor: grab;
+  }
+  .hue-slider::-moz-range-thumb {
+    width: 1rem;
+    height: 1.45rem;
+    border: none;
+    border-radius: 0.35rem;
+    background: #fff;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+    cursor: grab;
+  }
+  .hue-slider:active::-webkit-slider-thumb {
+    cursor: grabbing;
+  }
+
+  /* 选项行 */
+  .palette-pop :global(.opt-row) {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.65rem;
+    border-radius: 0.8rem;
+    background: color-mix(in oklch, var(--t-main) 7%, transparent);
+    padding: 0.6rem 0.85rem;
+    font-size: 0.9rem;
+    color: var(--t-muted);
+    cursor: pointer;
+    text-align: left;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
+  .palette-pop :global(.opt-row:hover) {
+    background: color-mix(in oklch, var(--t-main) 12%, transparent);
+  }
+  .palette-pop :global(.opt-row.active) {
+    color: var(--t-main);
+    font-weight: 600;
+  }
+
+  /* 激活对勾（选项行右侧的实心圆勾） */
+  .palette-pop :global(.opt-check) {
+    display: none;
+    margin-left: auto;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 999px;
+    background: var(--pr);
+    color: #fff;
+  }
+  .palette-pop :global(.opt-row.active .opt-check) {
+    display: inline-flex;
+  }
+  .palette-pop :global(.opt-check-inline) {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-left: 0.3rem;
+    border-radius: 999px;
+    background: var(--pr);
+    color: #fff;
+  }
+  .palette-pop :global(.opt-row.active .opt-check-inline) {
+    display: inline-flex;
+  }
+
+  /* iOS 风格开关 */
+  .palette-pop :global(.toggle) {
+    position: relative;
+    margin-left: auto;
+    flex-shrink: 0;
+    width: 2.7rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--t-main) 22%, transparent);
+    cursor: pointer;
+    transition: background-color 0.25s ease;
+  }
+  .palette-pop :global(.toggle .knob) {
+    position: absolute;
+    top: 0.14rem;
+    left: 0.14rem;
+    width: 1.22rem;
+    height: 1.22rem;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    transition: transform 0.25s ease;
+  }
+  .palette-pop :global(.toggle.on) {
+    background: var(--pr);
+  }
+  .palette-pop :global(.toggle.on .knob) {
+    transform: translateX(1.2rem);
+  }
+
+  .palette-pop.open {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+</style>
+
+<script is:inline data-astro-rerun>
+  (function () {
+    var root = document.documentElement;
+
+    // ── localStorage 工具 ──────────────────────────────────
+    function lsGet(key, fallback) {
+      try {
+        return localStorage.getItem(key) || fallback;
+      } catch (e) {
+        return fallback;
+      }
+    }
+    function lsSet(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch (e) {}
+    }
+
+    // ── 主题色相 ───────────────────────────────────────────
+    function getHue() {
+      try {
+        var p = JSON.parse(localStorage.getItem('palette'));
+        if (p && typeof p.hue === 'number') return Math.round(p.hue) % 360;
+      } catch (e) {}
+      return 295; // 梦幻紫默认
+    }
+    function applyHue(hue, save) {
+      var hue2 = (hue + 50) % 360; // 点缀色跟随主色相 +50（梦幻紫 295→345 同款偏移）
+      root.style.setProperty('--hue', String(hue));
+      root.style.setProperty('--hue2', String(hue2));
+      if (save) lsSet('palette', JSON.stringify({ hue: hue, hue2: hue2 }));
+      document.querySelectorAll('.hue-slider').forEach(function (s) {
+        s.value = String(hue);
+      });
+      document.querySelectorAll('.hue-badge').forEach(function (b) {
+        b.textContent = String(hue);
+      });
+    }
+
+    // ── 各设置的当前值 ─────────────────────────────────────
+    var DEFAULT_HUE = 295; // 梦幻紫默认色相
+    function getMode() {
+      var v = lsGet('hero-mode', 'banner');
+      return ['banner', 'full', 'cover', 'hidden'].indexOf(v) >= 0 ? v : 'banner';
+    }
+    function getToggle(key) {
+      return lsGet(key, 'on') === 'off' ? 'off' : 'on';
+    }
+    function getLayout() {
+      return lsGet('home-layout', 'list') === 'grid' ? 'grid' : 'list';
+    }
+
+    function applyAttrs() {
+      root.setAttribute('data-hero-mode', getMode());
+      root.setAttribute('data-hero-title', getToggle('hero-title'));
+      root.setAttribute('data-hero-ripple', getToggle('hero-ripple'));
+      root.setAttribute('data-home-layout', getLayout());
+    }
+    function dispatchSettings() {
+      document.dispatchEvent(new CustomEvent('site:settings'));
+    }
+
+    // ── 面板渲染（多实例同步） ─────────────────────────────
+    function paintAll() {
+      var mode = getMode();
+      var layout = getLayout();
+      var hue = getHue();
+      document.querySelectorAll('.palette-pop').forEach(function (pop) {
+        pop.querySelectorAll('[data-mode-opt]').forEach(function (btn) {
+          btn.classList.toggle('active', btn.dataset.modeOpt === mode);
+        });
+        pop.querySelectorAll('[data-layout-opt]').forEach(function (btn) {
+          btn.classList.toggle('active', btn.dataset.layoutOpt === layout);
+        });
+        pop.querySelectorAll('[data-toggle]').forEach(function (btn) {
+          var on = getToggle(btn.dataset.toggle) === 'on';
+          btn.classList.toggle('on', on);
+          btn.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+        // 恢复默认图标：仅在设置偏离默认时出现
+        pop.querySelectorAll('[data-reset="hue"]').forEach(function (btn) {
+          btn.hidden = hue === DEFAULT_HUE;
+        });
+        pop.querySelectorAll('[data-reset="mode"]').forEach(function (btn) {
+          btn.hidden = mode === 'banner';
+        });
+        pop.querySelectorAll('[data-reset="options"]').forEach(function (btn) {
+          btn.hidden =
+            getToggle('hero-title') === 'on' && getToggle('hero-ripple') === 'on';
+        });
+        pop.querySelectorAll('[data-reset="layout"]').forEach(function (btn) {
+          btn.hidden = layout === 'list';
+        });
+        var slider = pop.querySelector('.hue-slider');
+        var badge = pop.querySelector('.hue-badge');
+        if (slider) slider.value = String(hue);
+        if (badge) badge.textContent = String(hue);
+      });
+    }
+
+    // ── 初始化所有面板实例（data-astro-rerun 幂等重跑） ────
+    document.querySelectorAll('.palette-root').forEach(function (rootEl) {
+      var pop = rootEl.querySelector('.palette-pop');
+      if (!pop || pop.dataset.palBound) return;
+      pop.dataset.palBound = '1';
+
+      rootEl.querySelector('.palette-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        paintAll();
+        pop.classList.toggle('open');
+      });
+
+      // 面板内部点击不冒泡到 document 的「点击外部关闭」监听
+      pop.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var t = e.target instanceof Element ? e.target : null;
+        if (!t) return;
+
+        var modeBtn = t.closest('[data-mode-opt]');
+        if (modeBtn) {
+          lsSet('hero-mode', modeBtn.dataset.modeOpt);
+          applyAttrs();
+          paintAll();
+          dispatchSettings();
+          return;
+        }
+        var layoutBtn = t.closest('[data-layout-opt]');
+        if (layoutBtn) {
+          lsSet('home-layout', layoutBtn.dataset.layoutOpt);
+          applyAttrs();
+          paintAll();
+          dispatchSettings();
+          return;
+        }
+        var toggleBtn = t.closest('[data-toggle]');
+        if (toggleBtn) {
+          var key = toggleBtn.dataset.toggle;
+          var next = getToggle(key) === 'on' ? 'off' : 'on';
+          lsSet(key, next);
+          applyAttrs();
+          paintAll();
+          dispatchSettings();
+          return;
+        }
+        var resetBtn = t.closest('[data-reset]');
+        if (resetBtn) {
+          if (resetBtn.dataset.reset === 'hue') {
+            applyHue(DEFAULT_HUE, true);
+          } else if (resetBtn.dataset.reset === 'mode') {
+            lsSet('hero-mode', 'banner');
+            applyAttrs();
+          } else if (resetBtn.dataset.reset === 'options') {
+            lsSet('hero-title', 'on');
+            lsSet('hero-ripple', 'on');
+            applyAttrs();
+          } else if (resetBtn.dataset.reset === 'layout') {
+            lsSet('home-layout', 'list');
+            applyAttrs();
+          }
+          paintAll();
+          dispatchSettings();
+          return;
+        }
+        if (t.closest('.shuffle-btn')) {
+          document.dispatchEvent(new CustomEvent('hero:shuffle'));
+        }
+      });
+
+      // 色相滑条拖动实时换色（paintAll 同步恢复图标显隐）
+      pop.addEventListener('input', function (e) {
+        var t = e.target;
+        if (t instanceof HTMLInputElement && t.classList.contains('hue-slider')) {
+          applyHue(Number(t.value), true);
+          paintAll();
+        }
+      });
+    });
+
+    // 文档级监听只绑定一次：点击外部 / Esc 关闭所有弹层
+    if (!window.__paletteDocBound) {
+      window.__paletteDocBound = true;
+      document.addEventListener('click', function () {
+        document.querySelectorAll('.palette-pop.open').forEach(function (p) {
+          p.classList.remove('open');
+        });
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.palette-pop.open').forEach(function (p) {
+            p.classList.remove('open');
+          });
+        }
+      });
+    }
+
+    applyHue(getHue(), false);
+    applyAttrs();
+    paintAll();
+  })();
+</script>

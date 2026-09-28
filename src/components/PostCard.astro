@@ -1,9 +1,12 @@
 ---
 /**
- * 文章卡片：左侧文字（分类/标题/摘要/日期标签）+ 右侧封面缩略图
+ * 文章卡片：左侧文字（分类/标题/摘要/日期标签）+ 右侧封面缩略图 + 进入箭头。
+ * 整卡可点击：采用「拉伸链接」模式（绝对定位覆盖层），
+ * 避免锚点嵌套——HTML 解析器会拆碎嵌套的 <a>，破坏布局与点击。
+ * 右侧箭头为纯装饰（pointer-events-none），点击穿透到拉伸链接进入文章。
  */
 import Icon from './Icon.astro';
-import { formatDate, tagSlug, type Post } from '../utils/posts';
+import { categorySlug, formatDate, tagSlug, type Post } from '../utils/posts';
 
 interface Props {
   post: Post;
@@ -13,19 +16,32 @@ const { post } = Astro.props;
 const { title, description, published, tags, category, image } = post.data;
 ---
 
-<article class="card lift group overflow-hidden">
+<article class="card lift group relative overflow-hidden">
+  <!-- 拉伸链接：覆盖整卡，点击任意空白处进入文章。
+       z-10：悬停时封面图的 scale 变换会创建层叠上下文抬升图片，
+       链接必须恒定压在其上，否则悬停后点击图片区域会失效 -->
   <a
     href={`/posts/${post.id}`}
-    class="flex h-full items-stretch gap-4"
+    class="absolute inset-0 z-10"
     aria-label={title}
   >
-    <div class="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
+    <span class="sr-only">{title}</span>
+  </a>
+
+  <div class="post-card-inner flex items-stretch gap-4">
+    <div
+      class:list={[
+        'flex min-w-0 flex-1 flex-col p-5 sm:p-6',
+        !image && 'post-card-text-plain',
+      ]}
+    >
       <div class="flex items-center gap-2 text-xs text-muted">
-        <span
-          class="rounded-full bg-primary/12 px-2.5 py-0.5 font-medium text-primary"
+        <a
+          href={`/categories/${categorySlug(category)}`}
+          class="relative z-10 rounded-full bg-primary/12 px-2.5 py-0.5 font-medium text-primary transition-colors hover:bg-primary hover:text-white"
         >
           {category}
-        </span>
+        </a>
         <span class="inline-flex items-center gap-1">
           <Icon name="calendar" class="size-3.5" />
           {formatDate(published)}
@@ -51,15 +67,36 @@ const { title, description, published, tags, category, image } = post.data;
     </div>
     {
       image && (
-        <div class="hidden w-44 shrink-0 self-stretch sm:block lg:w-52">
+        <div class="post-card-cover hidden w-44 shrink-0 self-stretch sm:block lg:w-52">
           <img
             src={image}
             alt={`《${title}》封面`}
-            class="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+            class="size-full object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-75"
             loading="lazy"
           />
         </div>
       )
     }
-  </a>
+  </div>
+
+  <!-- 右侧进入箭头：有封面时悬停卡片才浮现纯箭头（无圆形包裹），无封面时为独立圆角胶囊。
+       pointer-events-none 让点击穿透到下方的拉伸链接 -->
+    {
+      image ? (
+        <div class="post-card-arrow pointer-events-none absolute inset-y-0 right-0 hidden w-44 items-center justify-center sm:flex lg:w-52">
+          <span class="text-white opacity-0 drop-shadow-[0_2px_6px_rgba(20,10,40,0.55)] transition-all duration-300 group-hover:scale-110 group-hover:opacity-100">
+            <Icon name="chevron-right" class="size-7" />
+          </span>
+        </div>
+      ) : (
+        <div class="post-card-arrow post-card-arrow-plain pointer-events-none absolute inset-y-0 right-0 hidden items-center pr-3 sm:flex">
+          <div class="post-card-arrow-capsule flex h-4/5 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary/20">
+            <Icon
+              name="chevron-right"
+              class="size-5 transition-transform duration-300 group-hover:translate-x-0.5"
+            />
+          </div>
+        </div>
+      )
+    }
 </article>

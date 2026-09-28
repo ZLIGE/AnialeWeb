@@ -1,0 +1,125 @@
+---
+/**
+ * 日历卡（右侧栏）：客户端渲染当月网格，左右箭头翻月；
+ * 今日高亮描边，有文章发布的日期以主题色加粗标记，悬停显示文章标题。
+ * 文章日期集合在构建期注入 data 属性，网格由脚本生成。
+ */
+import Icon from './Icon.astro';
+import { getSortedPosts } from '../utils/posts';
+
+const posts = await getSortedPosts();
+
+const byDate: Record<string, string[]> = {};
+for (const p of posts) {
+  const d = p.data.published;
+  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  (byDate[key] ??= []).push(p.data.title);
+}
+
+const postDates = JSON.stringify(Object.keys(byDate));
+const postTitles = JSON.stringify(byDate);
+const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+---
+
+<section
+  class="card p-5"
+  aria-label="文章日历"
+  data-post-dates={postDates}
+  data-post-titles={postTitles}
+>
+  <div class="mb-2 flex items-center justify-between">
+    <h3 class="text-sm font-bold">✧ 日历</h3>
+    <div class="flex items-center gap-0.5">
+      <button
+        data-cal-prev
+        class="flex size-7 items-center justify-center rounded-lg text-muted transition-colors hover:bg-primary/10 hover:text-primary"
+        aria-label="上一个月"
+      >
+        <Icon name="chevron-left" class="size-4" />
+      </button>
+      <span
+        data-cal-label
+        class="min-w-[5.5rem] text-center text-sm font-bold tabular-nums"
+      ></span>
+      <button
+        data-cal-next
+        class="flex size-7 items-center justify-center rounded-lg text-muted transition-colors hover:bg-primary/10 hover:text-primary"
+        aria-label="下一个月"
+      >
+        <Icon name="chevron-right" class="size-4" />
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-7 text-center text-xs text-muted">
+    {weekdays.map((w) => <span class="py-1">{w}</span>)}
+  </div>
+  <div data-cal-grid class="grid grid-cols-7 gap-y-0.5 text-center text-[13px]"></div>
+</section>
+
+<script is:inline data-astro-rerun>
+  (function () {
+    document.querySelectorAll('[data-cal-grid]').forEach(function (grid) {
+      var card = grid.closest('[aria-label="文章日历"]');
+      if (!card || card.dataset.calBound) return;
+      card.dataset.calBound = '1';
+
+      var postDates = JSON.parse(card.getAttribute('data-post-dates') || '[]');
+      var titleMap = JSON.parse(card.getAttribute('data-post-titles') || '{}');
+      var label = card.querySelector('[data-cal-label]');
+      var now = new Date();
+      var viewY = now.getFullYear();
+      var viewM = now.getMonth(); // 0 起始
+      var pad = function (n) {
+        return String(n).padStart(2, '0');
+      };
+
+      function render() {
+        label.textContent = viewY + ' 年 ' + (viewM + 1) + ' 月';
+        // 周一为首列：周日照应偏移 6 格
+        var offset = (new Date(viewY, viewM, 1).getDay() + 6) % 7;
+        var days = new Date(viewY, viewM + 1, 0).getDate();
+        var todayStr =
+          now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+        var html = '';
+        for (var b = 0; b < offset; b++) html += '<span></span>';
+        for (var d = 1; d <= days; d++) {
+          var ds = viewY + '-' + pad(viewM + 1) + '-' + pad(d);
+          var cls = 'flex h-8 items-center justify-center rounded-lg';
+          var tip = '';
+          if (postDates.indexOf(ds) !== -1) {
+            cls += ' bg-primary/15 font-bold text-primary';
+            tip = titleMap[ds].join('；');
+          } else {
+            cls += ' opacity-75';
+          }
+          if (ds === todayStr) {
+            cls += ' ring-1 ring-primary';
+            if (postDates.indexOf(ds) === -1) cls += ' font-bold text-primary';
+          }
+          html += '<span class="' + cls + '" title="' + tip + '">' + d + '</span>';
+        }
+        grid.innerHTML = html;
+      }
+
+      card.querySelector('[data-cal-prev]').addEventListener('click', function () {
+        viewM--;
+        if (viewM < 0) {
+          viewM = 11;
+          viewY--;
+        }
+        render();
+      });
+      card.querySelector('[data-cal-next]').addEventListener('click', function () {
+        viewM++;
+        if (viewM > 11) {
+          viewM = 0;
+          viewY++;
+        }
+        render();
+      });
+
+      render();
+    });
+  })();
+</script>
