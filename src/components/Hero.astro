@@ -4,7 +4,7 @@
  * - 打开网站时随机从一张图开始，之后按 hero.interval 自动轮播
  * - 指示点可手动切换；调色板「随机换一张」按钮触发 hero:shuffle 事件
  * - 底部渐变遮罩 + 站点标题（横幅标题可经面板关闭）
- * - 可选水波纹动画：Canvas 双色椭圆环扩散，鼠标划过与自动涟漪
+ * - 底部层叠波浪边界动效（面板「水波纹动画」开关控制流动/静止）
  * - 展示模式（横幅/全屏/覆盖/隐藏）由 <html data-hero-mode> 控制，见 global.css
  */
 import { siteConfig } from '../config';
@@ -41,16 +41,24 @@ const taglines = hero.taglines ?? [];
   >
   </div>
 
-  <!-- 水波纹动画画布（开关由 <html data-hero-ripple> 控制） -->
-  <canvas
-    data-hero-ripple
-    class="pointer-events-none absolute inset-0 size-full"
-    aria-hidden="true"
-  >
-  </canvas>
-
-  <!-- 底部渐变过渡（独立于标题，保证与内容衔接的可读性） -->
-  <div class="absolute inset-x-0 bottom-0 h-36 bg-linear-to-t from-black/50 to-transparent" />
+  <!-- 波浪边界（开关由 <html data-hero-ripple> 控制：off 时波浪静止） -->
+  <div class="hero-waves" aria-hidden="true">
+    <svg class="wave wave-back" viewBox="0 0 2880 120" preserveAspectRatio="none">
+      <path
+        d="M0,66 C240,108 480,26 720,66 C960,108 1200,26 1440,66 C1680,108 1920,26 2160,66 C2400,108 2640,26 2880,66 L2880,121 L0,121 Z"
+      ></path>
+    </svg>
+    <svg class="wave wave-mid" viewBox="0 0 2880 120" preserveAspectRatio="none">
+      <path
+        d="M0,52 C240,94 480,14 720,52 C960,94 1200,14 1440,52 C1680,94 1920,14 2160,52 C2400,94 2640,14 2880,52 L2880,121 L0,121 Z"
+      ></path>
+    </svg>
+    <svg class="wave wave-front" viewBox="0 0 2880 120" preserveAspectRatio="none">
+      <path
+        d="M0,34 C240,72 480,4 720,34 C960,72 1200,4 1440,34 C1680,72 1920,4 2160,34 C2400,72 2640,4 2880,34 L2880,121 L0,121 Z"
+      ></path>
+    </svg>
+  </div>
 
   <!-- 标题（居中布局，横幅选项中可关闭） -->
   <div
@@ -116,6 +124,79 @@ const taglines = hero.taglines ?? [];
       animation: none;
     }
   }
+
+  /* 层叠波浪边界：三层不同速度/方向的波浪横向漂移（SVG 宽 200% 平移
+     -50% 无缝循环），前层用页面底色与下方内容无缝衔接 */
+  .hero-waves {
+    position: absolute;
+    inset-inline: 0;
+    bottom: -1px;
+    height: 130px;
+    pointer-events: none;
+  }
+  .wave {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 200%;
+    height: 100%;
+  }
+  .wave-back {
+    fill: rgb(255 255 255 / 0.14);
+    animation: hero-wave-a 24s linear infinite reverse;
+  }
+  .wave-mid {
+    fill: rgb(255 255 255 / 0.24);
+    animation: hero-wave-b 15s linear infinite;
+  }
+  .wave-front {
+    fill: var(--bg);
+    animation: hero-wave-c 10s linear infinite;
+  }
+  /* 多层水波动效：每层「横向漂移整周期 + 纵向起伏」，三层相位/幅度/速度
+     各不相同形成层叠涌动；0% 与 100% 落点只差一个平移周期，循环无缝 */
+  @keyframes hero-wave-a {
+    0% {
+      transform: translate3d(0, -9px, 0);
+    }
+    50% {
+      transform: translate3d(-25%, 7px, 0);
+    }
+    100% {
+      transform: translate3d(-50%, -9px, 0);
+    }
+  }
+  @keyframes hero-wave-b {
+    0% {
+      transform: translate3d(0, 6px, 0);
+    }
+    50% {
+      transform: translate3d(-25%, -8px, 0);
+    }
+    100% {
+      transform: translate3d(-50%, 6px, 0);
+    }
+  }
+  @keyframes hero-wave-c {
+    0% {
+      transform: translate3d(0, -5px, 0);
+    }
+    50% {
+      transform: translate3d(-25%, 5px, 0);
+    }
+    100% {
+      transform: translate3d(-50%, -5px, 0);
+    }
+  }
+  /* 面板「水波纹动画」关闭时彻底去除波浪层 */
+  :global([data-hero-ripple='off']) .hero-waves {
+    display: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wave {
+      animation: none;
+    }
+  }
 </style>
 
 <!-- 随机起始 + 自动轮播 + 水波纹；data-astro-rerun 保证每次换页进入首页都重新初始化 -->
@@ -167,116 +248,6 @@ const taglines = hero.taglines ?? [];
       restart();
     }
 
-    // ── 水波纹动画 ────────────────────────────────────────
-    var engine = null;
-    function createRipple() {
-      var canvas = hero.querySelector('[data-hero-ripple]');
-      if (!canvas) return null;
-      var ctx = canvas.getContext('2d');
-      if (!ctx) return null;
-      var w = 0;
-      var h = 0;
-      var dpr = 1;
-      var ripples = [];
-      var raf = 0;
-      var stopped = false;
-      var lastPointer = 0;
-      var lastAuto = 0;
-
-      function resize() {
-        var r = hero.getBoundingClientRect();
-        if (r.width < 2 || r.height < 2) return;
-        dpr = Math.min(window.devicePixelRatio || 1, 2);
-        w = r.width;
-        h = r.height;
-        canvas.width = Math.round(w * dpr);
-        canvas.height = Math.round(h * dpr);
-      }
-      resize();
-      if (window.ResizeObserver) new ResizeObserver(resize).observe(hero);
-
-      function spawn(x, y) {
-        if (ripples.length > 28) ripples.shift();
-        ripples.push({ x: x, y: y, r: 3, v: 1.15 + Math.random() * 0.9, a: 0.5 });
-      }
-
-      function frame(t) {
-        if (stopped) return;
-        raf = requestAnimationFrame(frame);
-        var rect = hero.getBoundingClientRect();
-        // 滚出视口 / 页面隐藏 / 尺寸异常时跳过绘制，省电省帧
-        if (rect.bottom < 0 || rect.height < 2 || document.hidden) return;
-        if (t - lastAuto > 2600) {
-          lastAuto = t;
-          spawn(20 + Math.random() * (w - 40), 20 + Math.random() * (h - 40));
-        }
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, w, h);
-        ctx.globalCompositeOperation = 'lighter';
-        ripples = ripples.filter(function (p) {
-          return p.a > 0.03 && p.r < Math.max(w, h) * 0.6;
-        });
-        for (var i = 0; i < ripples.length; i++) {
-          var p = ripples[i];
-          p.r += p.v;
-          p.a *= 0.962;
-          // 暗色折射环（波谷阴影，普通合成，保证亮色图片上也可见）
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.strokeStyle = 'rgba(15,25,60,' + (p.a * 0.35).toFixed(3) + ')';
-          ctx.lineWidth = 2.4;
-          ctx.beginPath();
-          ctx.ellipse(p.x, p.y, p.r * 0.86, p.r * 0.36, 0, 0, Math.PI * 2);
-          ctx.stroke();
-          // 亮环（波峰）+ 宽柔环（波腹），加法混合发光，椭圆模拟水面透视
-          ctx.globalCompositeOperation = 'lighter';
-          ctx.strokeStyle = 'rgba(255,255,255,' + p.a.toFixed(3) + ')';
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.ellipse(p.x, p.y, p.r, p.r * 0.42, 0, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.strokeStyle = 'rgba(170,205,255,' + (p.a * 0.45).toFixed(3) + ')';
-          ctx.lineWidth = 3.2;
-          ctx.beginPath();
-          ctx.ellipse(p.x, p.y, p.r * 0.68, p.r * 0.29, 0, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-      }
-
-      function onMove(e) {
-        var rect = hero.getBoundingClientRect();
-        var x = e.clientX - rect.left;
-        var y = e.clientY - rect.top;
-        if (x < 0 || y < 0 || x > rect.width || y > rect.height) return;
-        var now = performance.now();
-        if (now - lastPointer < 75) return;
-        lastPointer = now;
-        spawn(x, y);
-      }
-
-      window.addEventListener('pointermove', onMove, { passive: true });
-      raf = requestAnimationFrame(frame);
-
-      return {
-        stop: function () {
-          stopped = true;
-          cancelAnimationFrame(raf);
-          window.removeEventListener('pointermove', onMove);
-          ctx.clearRect(0, 0, w, h);
-        },
-      };
-    }
-
-    function syncRipple() {
-      var want =
-        !reduce &&
-        document.documentElement.getAttribute('data-hero-ripple') !== 'off';
-      if (want && !engine && hero.isConnected) engine = createRipple();
-      if ((!want || !hero.isConnected) && engine) {
-        engine.stop();
-        engine = null;
-      }
-    }
-
     // ── 打字机标语 ────────────────────────────────────────
     var typeEl = hero.querySelector('[data-hero-type]');
     if (typeEl) {
@@ -324,17 +295,12 @@ const taglines = hero.taglines ?? [];
 
     // ── 事件绑定：经 window 柄转发到最新一次初始化的闭包，
     //    避免多页导航后 document 级监听器堆积／引用旧 DOM ──
-    window.__heroApi = { shuffle: shuffle, syncRipple: syncRipple };
+    window.__heroApi = { shuffle: shuffle };
     if (!window.__heroEventsBound) {
       window.__heroEventsBound = true;
       document.addEventListener('hero:shuffle', function () {
         window.__heroApi && window.__heroApi.shuffle();
       });
-      document.addEventListener('site:settings', function () {
-        window.__heroApi && window.__heroApi.syncRipple();
-      });
     }
-
-    syncRipple();
   })();
 </script>
