@@ -405,6 +405,15 @@
   /* Hero 已不在文档流内，顶部内边距回到导航栏高度 */
   padding-top: 5rem !important;
 }
+/* 覆盖模式：壁纸作为纯背景，不显示站名/标语/社交链接 */
+[data-hero-mode='cover'] [data-hero-caption] {
+  display: none;
+}
+/* 覆盖模式：导航栏只保留右侧工具（搜索/调色板/主题），站名与主导航隐藏 */
+[data-hero-mode='cover'] .navbar-brand,
+[data-hero-mode='cover'] [aria-label='主导航'] {
+  visibility: hidden;
+}
 
 /* 隐藏壁纸：不显示 Hero，内容直达 */
 [data-hero-mode='hidden'] .hero-slot {
