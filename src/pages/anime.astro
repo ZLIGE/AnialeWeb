@@ -1,14 +1,18 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageBanner from '../components/PageBanner.astro';
 import Icon from '../components/Icon.astro';
 import { animeList } from '../data/anime';
 
 const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
 ---
 
-<BaseLayout title="追番录" description="我的追番清单与一句话感想">
+<BaseLayout title="追番录" description="我的追番清单与一句话感想" hero>
+  <Fragment slot="hero">
+    <PageBanner title="追番录" sub={`共 ${animeList.length} 部作品`} />
+  </Fragment>
   <div class="flex flex-col gap-5">
-    <h1 class="card px-5 py-3.5 text-lg font-bold">
+    <h1 class="page-heading card px-5 py-3.5 text-lg font-bold">
       ✧ 追番录
       <span class="ml-1.5 text-sm font-normal text-muted"
         >（{animeList.length} 部）</span

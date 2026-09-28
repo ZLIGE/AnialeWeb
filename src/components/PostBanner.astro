@@ -1,13 +1,13 @@
 ---
 /**
- * 文章页壁纸横幅：壁纸轮播（随机起始 + 自动轮播）上居中展示
+ * 文章页壁纸横幅：壁纸延续显示（跨页持久层）上居中展示
  * 文章标题 / 发布日期 / 分类 / 字数，底部层叠波浪过渡到正文。
  * 仅在壁纸「横幅 / 全屏」模式下显示——覆盖与隐藏模式由
  * global.css 按 <html data-hero-mode> 隐藏。
  * id="hero" 复用首页横幅的全屏模式样式与导航栏 over-hero 白字逻辑。
  */
-import { siteConfig } from '../config';
 import Icon from './Icon.astro';
+import HeroBackdrop from './HeroBackdrop.astro';
 import { formatDate, categorySlug } from '../utils/posts';
 
 interface Props {
@@ -17,8 +17,6 @@ interface Props {
   words: number;
 }
 
-const { hero } = siteConfig;
-const images = hero.images;
 const { title: postTitle, date, category, words } = Astro.props;
 ---
 
@@ -26,49 +24,11 @@ const { title: postTitle, date, category, words } = Astro.props;
   id="hero"
   class="post-hero relative h-[62vh] max-h-[640px] min-h-[420px] w-full overflow-hidden bg-linear-160 from-[oklch(0.3_0.08_295)] to-[oklch(0.45_0.12_320)]"
 >
-  {
-    images.map((src, i) => (
-      <img
-        src={src}
-        alt=""
-        class:list={[
-          'absolute inset-0 size-full object-cover transition-opacity duration-[1400ms] ease-in-out motion-reduce:transition-none',
-          'opacity-0',
-        ]}
-        data-hero-img={i}
-        loading={i === 0 ? 'eager' : 'lazy'}
-        fetchpriority={i === 0 ? 'high' : 'auto'}
-        draggable="false"
-      />
-    ))
-  }
-  <div
-    class="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-black/25"
-    style={`opacity:${hero.overlay + 0.1}`}
-  >
-  </div>
+  <HeroBackdrop />
 
-  <!-- 波浪边界（开关由 <html data-hero-ripple> 控制：off 时移除） -->
-  <div class="hero-waves" aria-hidden="true">
-    <svg class="wave wave-back" viewBox="0 0 2880 120" preserveAspectRatio="none">
-      <path
-        d="M0,66 C240,108 480,26 720,66 C960,108 1200,26 1440,66 C1680,108 1920,26 2160,66 C2400,108 2640,26 2880,66 L2880,121 L0,121 Z"
-      ></path>
-    </svg>
-    <svg class="wave wave-mid" viewBox="0 0 2880 120" preserveAspectRatio="none">
-      <path
-        d="M0,52 C240,94 480,14 720,52 C960,94 1200,14 1440,52 C1680,94 1920,14 2160,52 C2400,94 2640,14 2880,52 L2880,121 L0,121 Z"
-      ></path>
-    </svg>
-    <svg class="wave wave-front" viewBox="0 0 2880 120" preserveAspectRatio="none">
-      <path
-        d="M0,34 C240,72 480,4 720,34 C960,72 1200,4 1440,34 C1680,72 1920,4 2160,34 C2400,72 2640,4 2880,34 L2880,121 L0,121 Z"
-      ></path>
-    </svg>
-  </div>
-
-  <!-- 文章标题与元信息（居中，淡入替换首页标题） -->
+  <!-- 文章标题与元信息（居中，与首页标题通过视图过渡交叉淡入淡出） -->
   <div
+    transition:name="hero-caption"
     class="post-banner-caption absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center"
   >
     <h1
@@ -98,7 +58,7 @@ const { title: postTitle, date, category, words } = Astro.props;
   </div>
 </section>
 
-<!-- 随机起始 + 自动轮播；data-astro-rerun 保证每次换页都重新初始化 -->
+<!-- 壁纸延续：优先接续本会话正在显示的那张；data-astro-rerun 换页重新初始化 -->
 <script is:inline data-astro-rerun>
   (function () {
     var hero = document.getElementById('hero');
@@ -107,7 +67,6 @@ const { title: postTitle, date, category, words } = Astro.props;
     if (imgs.length === 0) return;
 
     var interval = 6000;
-    // 壁纸延续：优先接续本会话正在显示的那张（首页/文章横幅共享），无记录则随机
     var saved = parseInt(sessionStorage.getItem('hero-img'), 10);
     var current =
       Number.isFinite(saved) && saved >= 0 && saved < imgs.length
@@ -150,75 +109,13 @@ const { title: postTitle, date, category, words } = Astro.props;
     show(current);
     restart();
 
-    // 调色板「随机换一张」在文章页同样生效（覆盖同柄）
+    // 调色板「随机换一张」在文章页同样生效
     window.__heroApi = { shuffle: shuffle };
   })();
 </script>
 
 <style>
-  /* 层叠波浪边界：与首页横幅同一套参数（三层漂移 + 纵向起伏，
-     前层用页面底色无缝衔接；SVG 高度越界 10px 防起伏露底） */
-  .hero-waves {
-    position: absolute;
-    inset-inline: 0;
-    bottom: -1px;
-    height: 130px;
-    pointer-events: none;
-  }
-  .wave {
-    position: absolute;
-    bottom: -10px;
-    left: 0;
-    width: 200%;
-    height: calc(100% + 20px);
-  }
-  .wave-back {
-    fill: rgb(255 255 255 / 0.14);
-    animation: post-wave-a 24s linear infinite reverse;
-  }
-  .wave-mid {
-    fill: rgb(255 255 255 / 0.24);
-    animation: post-wave-b 15s linear infinite;
-  }
-  .wave-front {
-    fill: var(--bg);
-    transition: fill 0.3s ease;
-    animation: post-wave-c 10s linear infinite;
-  }
-  @keyframes post-wave-a {
-    0% {
-      transform: translate3d(0, -9px, 0);
-    }
-    50% {
-      transform: translate3d(-25%, 7px, 0);
-    }
-    100% {
-      transform: translate3d(-50%, -9px, 0);
-    }
-  }
-  @keyframes post-wave-b {
-    0% {
-      transform: translate3d(0, 6px, 0);
-    }
-    50% {
-      transform: translate3d(-25%, -8px, 0);
-    }
-    100% {
-      transform: translate3d(-50%, 6px, 0);
-    }
-  }
-  @keyframes post-wave-c {
-    0% {
-      transform: translate3d(0, -5px, 0);
-    }
-    50% {
-      transform: translate3d(-25%, 5px, 0);
-    }
-    100% {
-      transform: translate3d(-50%, -5px, 0);
-    }
-  }
-  /* 标题与元信息淡入（壁纸延续时，首页原标题换成本文章标题的过渡） */
+  /* 标题与元信息淡入（壁纸延续时，首页标题换成本文章标题的过渡） */
   .post-banner-caption {
     animation: post-caption-in 0.9s ease 0.2s both;
   }
@@ -234,15 +131,6 @@ const { title: postTitle, date, category, words } = Astro.props;
   }
   @media (prefers-reduced-motion: reduce) {
     .post-banner-caption {
-      animation: none;
-    }
-  }
-  /* 面板「水波纹动画」关闭时彻底去除波浪层 */
-  :global([data-hero-ripple='off']) .hero-waves {
-    display: none;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .wave {
       animation: none;
     }
   }

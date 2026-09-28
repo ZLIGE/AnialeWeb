@@ -1,10 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageBanner from '../components/PageBanner.astro';
 import Icon from '../components/Icon.astro';
 import { siteConfig } from '../config';
 ---
 
-<BaseLayout title="关于我" description={`${siteConfig.author} 的自我介绍页面`}>
+<BaseLayout title="关于我" description={`${siteConfig.author} 的自我介绍页面`} hero>
+  <Fragment slot="hero">
+    <PageBanner title="关于我" sub={siteConfig.subtitle} />
+  </Fragment>
   <div class="flex flex-col gap-5">
     <!-- 个人资料卡 -->
     <section class="card overflow-hidden">

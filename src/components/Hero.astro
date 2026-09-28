@@ -9,61 +9,23 @@
  */
 import { siteConfig } from '../config';
 import Icon from './Icon.astro';
+import HeroBackdrop from './HeroBackdrop.astro';
 
-const { hero, title, subtitle, social } = siteConfig;
-const images = hero.images;
-const taglines = hero.taglines ?? [];
+const { title, subtitle, social } = siteConfig;
+const taglines = siteConfig.hero.taglines ?? [];
 ---
 
 <section
   id="hero"
   class="relative h-[62vh] max-h-[640px] min-h-[420px] w-full overflow-hidden bg-linear-160 from-[oklch(0.3_0.08_295)] to-[oklch(0.45_0.12_320)]"
 >
-  {
-    images.map((src, i) => (
-      <img
-        src={src}
-        alt={`站点背景 ${i + 1}`}
-        class:list={[
-          'absolute inset-0 size-full object-cover transition-opacity duration-[1400ms] ease-in-out motion-reduce:transition-none',
-          'opacity-0',
-        ]}
-        data-hero-img={i}
-        loading={i === 0 ? 'eager' : 'auto'}
-        fetchpriority={i === 0 ? 'high' : 'auto'}
-        draggable="false"
-      />
-    ))
-  }
-  <div
-    class="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-black/25"
-    style={`opacity:${hero.overlay + 0.1}`}
-  >
-  </div>
-
-  <!-- 波浪边界（开关由 <html data-hero-ripple> 控制：off 时波浪静止） -->
-  <div class="hero-waves" aria-hidden="true">
-    <svg class="wave wave-back" viewBox="0 0 2880 120" preserveAspectRatio="none">
-      <path
-        d="M0,66 C240,108 480,26 720,66 C960,108 1200,26 1440,66 C1680,108 1920,26 2160,66 C2400,108 2640,26 2880,66 L2880,121 L0,121 Z"
-      ></path>
-    </svg>
-    <svg class="wave wave-mid" viewBox="0 0 2880 120" preserveAspectRatio="none">
-      <path
-        d="M0,52 C240,94 480,14 720,52 C960,94 1200,14 1440,52 C1680,94 1920,14 2160,52 C2400,94 2640,14 2880,52 L2880,121 L0,121 Z"
-      ></path>
-    </svg>
-    <svg class="wave wave-front" viewBox="0 0 2880 120" preserveAspectRatio="none">
-      <path
-        d="M0,34 C240,72 480,4 720,34 C960,72 1200,4 1440,34 C1680,72 1920,4 2160,34 C2400,72 2640,4 2880,34 L2880,121 L0,121 Z"
-      ></path>
-    </svg>
-  </div>
+  <HeroBackdrop />
 
   <!-- 标题（居中布局，横幅选项中可关闭） -->
   <div
     data-hero-caption
     data-taglines={JSON.stringify(taglines)}
+    transition:name="hero-caption"
     class="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 pb-10 text-center"
   >
     <h1
@@ -121,83 +83,6 @@ const taglines = hero.taglines ?? [];
   }
   @media (prefers-reduced-motion: reduce) {
     .type-caret {
-      animation: none;
-    }
-  }
-
-  /* 层叠波浪边界：三层不同速度/方向的波浪横向漂移（SVG 宽 200% 平移
-     -50% 无缝循环），前层用页面底色与下方内容无缝衔接 */
-  .hero-waves {
-    position: absolute;
-    inset-inline: 0;
-    bottom: -1px;
-    height: 130px;
-    pointer-events: none;
-  }
-  .wave {
-    position: absolute;
-    /* 高度多出 20px、基线越界 10px：纵向起伏（±5~9px）在任何相位
-       都不会让波浪底边升到横幅底缘之上，避免露出一条暗色间隙 */
-    bottom: -10px;
-    left: 0;
-    width: 200%;
-    height: calc(100% + 20px);
-  }
-  .wave-back {
-    fill: rgb(255 255 255 / 0.14);
-    animation: hero-wave-a 24s linear infinite reverse;
-  }
-  .wave-mid {
-    fill: rgb(255 255 255 / 0.24);
-    animation: hero-wave-b 15s linear infinite;
-  }
-  .wave-front {
-    fill: var(--bg);
-    /* 与 body 背景同时长过渡：调色板换色时波浪与下方主题色同步渐变 */
-    transition: fill 0.3s ease;
-    animation: hero-wave-c 10s linear infinite;
-  }
-  /* 多层水波动效：每层「横向漂移整周期 + 纵向起伏」，三层相位/幅度/速度
-     各不相同形成层叠涌动；0% 与 100% 落点只差一个平移周期，循环无缝 */
-  @keyframes hero-wave-a {
-    0% {
-      transform: translate3d(0, -9px, 0);
-    }
-    50% {
-      transform: translate3d(-25%, 7px, 0);
-    }
-    100% {
-      transform: translate3d(-50%, -9px, 0);
-    }
-  }
-  @keyframes hero-wave-b {
-    0% {
-      transform: translate3d(0, 6px, 0);
-    }
-    50% {
-      transform: translate3d(-25%, -8px, 0);
-    }
-    100% {
-      transform: translate3d(-50%, 6px, 0);
-    }
-  }
-  @keyframes hero-wave-c {
-    0% {
-      transform: translate3d(0, -5px, 0);
-    }
-    50% {
-      transform: translate3d(-25%, 5px, 0);
-    }
-    100% {
-      transform: translate3d(-50%, -5px, 0);
-    }
-  }
-  /* 面板「水波纹动画」关闭时彻底去除波浪层 */
-  :global([data-hero-ripple='off']) .hero-waves {
-    display: none;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .wave {
       animation: none;
     }
   }

@@ -409,10 +409,29 @@
 [data-hero-mode='cover'] [data-hero-caption] {
   display: none;
 }
-/* 覆盖模式：导航栏只保留右侧工具（搜索/调色板/主题），站名与主导航隐藏 */
-[data-hero-mode='cover'] .navbar-brand,
-[data-hero-mode='cover'] [aria-label='主导航'] {
-  visibility: hidden;
+/* 覆盖模式：导航栏改为顶部贴合的毛玻璃横条（参考 Mizuki 样式）：
+   上方不留空隙、宽度与下方容器对齐（90rem）、底部圆角悬挂；
+   头部自身透明，卡片样式挂在 navbar-row 上（!important 压过滚动实底样式） */
+html[data-hero-mode='cover'] #site-navbar {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-hero-mode='cover'] #site-navbar .navbar-row {
+  max-width: 90rem;
+  border-radius: 0 0 1rem 1rem;
+  border: 1px solid var(--line);
+  border-top: none;
+  background-color: var(--card-t);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-nav);
+}
+/* 覆盖模式：玻璃卡片自带底色，over-hero 白字逻辑不适用 */
+html[data-hero-mode='cover'] #site-navbar.over-hero .navbar-row :where(a, button, span) {
+  color: inherit;
 }
 
 /* 隐藏壁纸：不显示 Hero，内容直达 */
@@ -432,6 +451,12 @@
 }
 [data-hero-mode='banner'] .post-cover-img,
 [data-hero-mode='full'] .post-cover-img {
+  display: none;
+}
+
+/* 板块页标题卡：横幅/全屏模式下由横幅标题替代 */
+[data-hero-mode='banner'] .page-heading,
+[data-hero-mode='full'] .page-heading {
   display: none;
 }
 

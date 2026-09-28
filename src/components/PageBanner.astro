@@ -1,0 +1,40 @@
+---
+/**
+ * 板块页壁纸横幅：壁纸延续显示（跨页持久层），居中展示板块标题与副行。
+ * 横幅/全屏模式显示；覆盖模式仅壁纸（标题隐藏）；隐藏模式不显示。
+ * id="hero" 复用全屏模式样式与导航栏 over-hero 白字逻辑。
+ */
+import HeroBackdrop from './HeroBackdrop.astro';
+
+interface Props {
+  title: string;
+  sub?: string;
+}
+
+const { title, sub } = Astro.props;
+---
+
+<section
+  id="hero"
+  class="page-hero relative h-[62vh] max-h-[640px] min-h-[420px] w-full overflow-hidden bg-linear-160 from-[oklch(0.3_0.08_295)] to-[oklch(0.45_0.12_320)]"
+>
+  <HeroBackdrop />
+
+  <!-- 板块标题（居中；与首页/文章标题通过视图过渡交叉淡入淡出） -->
+  <div
+    data-hero-caption
+    transition:name="hero-caption"
+    class="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center"
+  >
+    <h1
+      class="text-4xl font-bold text-white drop-shadow-[0_2px_14px_rgba(10,5,30,0.75)] sm:text-6xl"
+    >
+      {title}
+    </h1>
+    {
+      sub && (
+        <p class="text-base text-white/90 drop-shadow sm:text-lg">{sub}</p>
+      )
+    }
+  </div>
+</section>

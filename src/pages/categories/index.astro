@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageBanner from '../../components/PageBanner.astro';
 import Icon from '../../components/Icon.astro';
 import { getAllCategories, getSortedPosts } from '../../utils/posts';
 
@@ -8,9 +9,12 @@ const cats = getAllCategories(posts);
 const max = Math.max(...cats.map(([, n]) => n), 1);
 ---
 
-<BaseLayout title="分类" description="全部文章分类">
+<BaseLayout title="分类" description="全部文章分类" hero>
+  <Fragment slot="hero">
+    <PageBanner title="分类" sub={`共 ${cats.length} 个分类`} />
+  </Fragment>
   <div class="flex flex-col gap-5">
-    <h1 class="card px-5 py-3.5 text-lg font-bold">
+    <h1 class="page-heading card px-5 py-3.5 text-lg font-bold">
       ✧ 分类
       <span class="ml-1.5 text-sm font-normal text-muted"
         >（共 {cats.length} 个）</span

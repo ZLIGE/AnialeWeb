@@ -1,0 +1,125 @@
+---
+/**
+ * 壁纸背景层（首页横幅与文章横幅共享）：
+ * transition:persist 让这层 DOM——已加载的 5 张壁纸、遮罩、波浪动画相位——
+ * 在换页时原样跨页保留：壁纸不重载、不闪烁；标题层独立淡出/淡入。
+ */
+import { siteConfig } from '../config';
+
+const { hero } = siteConfig;
+const images = hero.images;
+---
+
+<div class="hero-backdrop absolute inset-0" transition:persist="hero-backdrop">
+  {
+    images.map((src, i) => (
+      <img
+        src={src}
+        alt=""
+        class="absolute inset-0 size-full object-cover opacity-0 transition-opacity duration-[1400ms] ease-in-out motion-reduce:transition-none"
+        data-hero-img={i}
+        loading="eager"
+        fetchpriority={i === 0 ? 'high' : 'auto'}
+        draggable="false"
+      />
+    ))
+  }
+  <div
+    class="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-black/25"
+    style={`opacity:${hero.overlay + 0.1}`}
+  >
+  </div>
+
+  <!-- 层叠波浪边界（面板「水波纹动画」off 时移除） -->
+  <div class="hero-waves" aria-hidden="true">
+    <svg class="wave wave-back" viewBox="0 0 2880 120" preserveAspectRatio="none">
+      <path
+        d="M0,66 C240,108 480,26 720,66 C960,108 1200,26 1440,66 C1680,108 1920,26 2160,66 C2400,108 2640,26 2880,66 L2880,121 L0,121 Z"
+      ></path>
+    </svg>
+    <svg class="wave wave-mid" viewBox="0 0 2880 120" preserveAspectRatio="none">
+      <path
+        d="M0,52 C240,94 480,14 720,52 C960,94 1200,14 1440,52 C1680,94 1920,14 2160,52 C2400,94 2640,14 2880,52 L2880,121 L0,121 Z"
+      ></path>
+    </svg>
+    <svg class="wave wave-front" viewBox="0 0 2880 120" preserveAspectRatio="none">
+      <path
+        d="M0,34 C240,72 480,4 720,34 C960,72 1200,4 1440,34 C1680,72 1920,4 2160,34 C2400,72 2640,4 2880,34 L2880,121 L0,121 Z"
+      ></path>
+    </svg>
+  </div>
+</div>
+
+<style>
+  /* 层叠波浪边界：三层漂移 + 纵向起伏，前层用页面底色无缝衔接；
+     SVG 高度越界 10px 防起伏露底 */
+  .hero-waves {
+    position: absolute;
+    inset-inline: 0;
+    bottom: -1px;
+    height: 130px;
+    pointer-events: none;
+  }
+  .wave {
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 200%;
+    height: calc(100% + 20px);
+  }
+  .wave-back {
+    fill: rgb(255 255 255 / 0.14);
+    animation: hero-wave-a 24s linear infinite reverse;
+  }
+  .wave-mid {
+    fill: rgb(255 255 255 / 0.24);
+    animation: hero-wave-b 15s linear infinite;
+  }
+  .wave-front {
+    fill: var(--bg);
+    transition: fill 0.3s ease;
+    animation: hero-wave-c 10s linear infinite;
+  }
+  @keyframes hero-wave-a {
+    0% {
+      transform: translate3d(0, -9px, 0);
+    }
+    50% {
+      transform: translate3d(-25%, 7px, 0);
+    }
+    100% {
+      transform: translate3d(-50%, -9px, 0);
+    }
+  }
+  @keyframes hero-wave-b {
+    0% {
+      transform: translate3d(0, 6px, 0);
+    }
+    50% {
+      transform: translate3d(-25%, -8px, 0);
+    }
+    100% {
+      transform: translate3d(-50%, 6px, 0);
+    }
+  }
+  @keyframes hero-wave-c {
+    0% {
+      transform: translate3d(0, -5px, 0);
+    }
+    50% {
+      transform: translate3d(-25%, 5px, 0);
+    }
+    100% {
+      transform: translate3d(-50%, -5px, 0);
+    }
+  }
+  /* 面板「水波纹动画」关闭时彻底去除波浪层 */
+  :global([data-hero-ripple='off']) .hero-waves {
+    display: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wave {
+      animation: none;
+    }
+  }
+</style>

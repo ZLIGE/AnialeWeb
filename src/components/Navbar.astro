@@ -17,10 +17,10 @@ const isActive = (link: string) =>
 
 <header id="site-navbar" class="fixed inset-x-0 top-0 z-50">
   <div
-    class="navbar-row mx-auto flex h-16 max-w-[86rem] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
+    class="navbar-row mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
   >
     <!-- 站点标识：竖条装饰 + 站名 -->
-    <a href="/" class="flex shrink-0 items-center gap-2 text-lg font-bold tracking-wide">
+    <a href="/" class="navbar-brand flex shrink-0 items-center gap-2 text-lg font-bold tracking-wide">
       <span class="h-5 w-1 rounded-full bg-linear-180 from-primary to-accent"></span>
       <span class="text-gradient">{title}</span>
     </a>
@@ -138,14 +138,18 @@ const isActive = (link: string) =>
 
 <script>
   // 滚动状态：顶部透明（首页 Hero 上为白字）↔ 毛玻璃卡片；
-  // window 监听只绑定一次，处理器惰性查询当前头部
+  // window 监听只绑定一次，处理器惰性查询当前头部。
+  // 壁纸覆盖模式下导航栏是悬浮玻璃卡片：跳过 over-hero 白字逻辑。
   function updateNavbar() {
     const header = document.getElementById('site-navbar');
     if (!header) return;
     const scrolled = window.scrollY > 24;
     header.classList.toggle('is-scrolled', scrolled);
+    const cover =
+      document.documentElement.getAttribute('data-hero-mode') === 'cover';
     const heroEl = document.getElementById('hero');
     const overHero =
+      !cover &&
       document.body.dataset.hasHero === 'true' &&
       !!heroEl &&
       window.scrollY < heroEl.offsetHeight - 64;
@@ -156,6 +160,8 @@ const isActive = (link: string) =>
   ) {
     (window as unknown as { __navScrollBound: boolean }).__navScrollBound = true;
     window.addEventListener('scroll', updateNavbar, { passive: true });
+    // 调色板切换壁纸模式后立即重算（over-hero / is-scrolled 状态）
+    document.addEventListener('site:settings', updateNavbar);
   }
   updateNavbar();
   document.addEventListener('astro:page-load', updateNavbar);
