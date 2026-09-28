@@ -153,6 +153,8 @@ const taglines = hero.taglines ?? [];
   }
   .wave-front {
     fill: var(--bg);
+    /* 与 body 背景同时长过渡：调色板换色时波浪与下方主题色同步渐变 */
+    transition: fill 0.3s ease;
     animation: hero-wave-c 10s linear infinite;
   }
   /* 多层水波动效：每层「横向漂移整周期 + 纵向起伏」，三层相位/幅度/速度
