@@ -136,10 +136,12 @@ const taglines = hero.taglines ?? [];
   }
   .wave {
     position: absolute;
-    bottom: 0;
+    /* 高度多出 20px、基线越界 10px：纵向起伏（±5~9px）在任何相位
+       都不会让波浪底边升到横幅底缘之上，避免露出一条暗色间隙 */
+    bottom: -10px;
     left: 0;
     width: 200%;
-    height: 100%;
+    height: calc(100% + 20px);
   }
   .wave-back {
     fill: rgb(255 255 255 / 0.14);
