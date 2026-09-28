@@ -118,7 +118,8 @@
       color 0.3s ease;
   }
 
-  /* 梦幻光斑背景 */
+  /* 梦幻光斑背景（transition 与 body 同步：调色板换色相时
+     光斑与页面底色、波浪一起 0.3s 渐变，避免瞬时跳变错位） */
   body::before {
     content: '';
     position: fixed;
@@ -129,6 +130,7 @@
       radial-gradient(42rem 42rem at 6% -12%, var(--glow-a), transparent 62%),
       radial-gradient(52rem 52rem at 108% 112%, var(--glow-b), transparent 62%),
       radial-gradient(34rem 34rem at 92% 2%, var(--glow-c), transparent 66%);
+    transition: background 0.3s ease;
   }
 
   ::selection {
@@ -410,6 +412,18 @@
 }
 [data-hero-mode='hidden'] .site-container {
   padding-top: 5rem !important;
+}
+
+/* 文章页壁纸横幅（PostBanner，横幅/全屏模式显示，
+   横幅内居中展示文章标题与元信息）：
+   - 覆盖模式：横幅隐藏（文章卡直接浮于页面之上）
+   - 横幅/全屏模式：文章卡自带封面隐藏（横幅已承担视觉） */
+[data-hero-mode='cover'] .post-hero {
+  display: none;
+}
+[data-hero-mode='banner'] .post-cover-img,
+[data-hero-mode='full'] .post-cover-img {
+  display: none;
 }
 
 /* 横幅标题开关 */
