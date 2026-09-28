@@ -43,3 +43,26 @@ export function tagSlug(tag: string): string {
 export function categorySlug(category: string): string {
   return encodeURIComponent(category);
 }
+
+/**
+ * 统计正文字数：CJK 逐字 + 西文按词（与站点统计卡同一口径）。
+ * 输入为原始 Markdown（frontmatter/代码块/图片链接等已剔除）。
+ */
+export function countWords(raw: string): number {
+  const text = raw
+    .replace(/^---[\s\S]*?---/, '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`[^`\n]*`/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[#>*_~|]/g, ' ');
+  const cjk = (text.match(/[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]/g) ?? [])
+    .length;
+  const latin = (
+    text
+      .replace(/[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]/g, ' ')
+      .match(/[A-Za-z0-9]+/g) ?? []
+  ).length;
+  return cjk + latin;
+}

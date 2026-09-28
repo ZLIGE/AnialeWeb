@@ -212,7 +212,12 @@ const taglines = hero.taglines ?? [];
     if (imgs.length === 0) return;
 
     var interval = 6000;
-    var current = Math.floor(Math.random() * imgs.length); // 随机起始
+    // 壁纸延续：优先接续本会话正在显示的那张（首页与文章横幅共享），无记录则随机
+    var saved = parseInt(sessionStorage.getItem('hero-img'), 10);
+    var current =
+      Number.isFinite(saved) && saved >= 0 && saved < imgs.length
+        ? saved
+        : Math.floor(Math.random() * imgs.length);
     var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     var timer = 0;
 
@@ -221,6 +226,9 @@ const taglines = hero.taglines ?? [];
       imgs.forEach(function (img, i) {
         img.style.opacity = i === current ? '1' : '0';
       });
+      try {
+        sessionStorage.setItem('hero-img', String(current));
+      } catch (e) {}
     }
 
     function next() {
