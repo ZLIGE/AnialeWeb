@@ -19,12 +19,7 @@ const show = Boolean(text && text.trim());
 
 {
   show && (
-    <section
-      id={id}
-      data-announcement
-      class="card border-primary/30 p-4"
-      style="background: color-mix(in oklch, var(--pr) 9%, var(--card))"
-    >
+    <section id={id} data-announcement class="card p-4">
       <div class="flex items-center justify-between">
         <h3 class="flex items-center gap-1.5 text-sm font-bold text-primary">
           <Icon name="megaphone" class="size-4" />
