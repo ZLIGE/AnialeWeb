@@ -36,10 +36,12 @@ const {
         !image && 'post-card-text-plain',
       ]}
     >
-      <div class="flex items-center gap-2 text-xs text-muted">
+      <div
+        class="flex flex-wrap items-center gap-2 gap-y-1.5 text-xs text-muted"
+      >
         {
           pinned && (
-            <span class="relative z-10 inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 font-medium text-accent">
+            <span class="relative z-10 inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-accent/15 px-2 py-0.5 font-medium text-accent">
               <Icon name="pin" class="size-3" />
               置顶
             </span>
@@ -47,7 +49,7 @@ const {
         }
         {
           password && (
-            <span class="relative z-10 inline-flex items-center gap-1 rounded-full bg-primary/12 px-2 py-0.5 text-primary">
+            <span class="relative z-10 inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-primary/12 px-2 py-0.5 text-primary">
               <Icon name="lock" class="size-3" />
               已加密
             </span>
@@ -55,11 +57,11 @@ const {
         }
         <a
           href={`/categories/${categorySlug(category)}`}
-          class="relative z-10 rounded-full bg-primary/12 px-2.5 py-0.5 font-medium text-primary transition-colors hover:bg-primary hover:text-white"
+          class="relative z-10 shrink-0 whitespace-nowrap rounded-full bg-primary/12 px-2.5 py-0.5 font-medium text-primary transition-colors hover:bg-primary hover:text-white"
         >
           {category}
         </a>
-        <span class="inline-flex items-center gap-1">
+        <span class="inline-flex shrink-0 items-center gap-1 whitespace-nowrap">
           <Icon name="calendar" class="size-3.5" />
           {formatDate(published)}
         </span>
