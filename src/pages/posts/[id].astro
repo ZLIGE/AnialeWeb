@@ -256,16 +256,16 @@ const words = countWords(post.body ?? '');
     <!-- 上一篇 / 下一篇 -->
     <nav class="grid gap-4 sm:grid-cols-2" aria-label="相邻文章">
       {
-        older ? (
+        newer ? (
           <a
-            href={`/posts/${older.id}`}
+            href={`/posts/${newer.id}`}
             class="card lift group flex flex-col gap-1 p-5"
           >
             <span class="flex items-center gap-1.5 text-xs text-muted">
               <Icon name="chevron-left" class="size-3.5" /> 上一篇
             </span>
             <span class="font-bold transition-colors group-hover:text-primary">
-              {older.data.title}
+              {newer.data.title}
             </span>
           </a>
         ) : (
@@ -273,16 +273,16 @@ const words = countWords(post.body ?? '');
         )
       }
       {
-        newer && (
+        older && (
           <a
-            href={`/posts/${newer.id}`}
+            href={`/posts/${older.id}`}
             class="card lift group flex flex-col items-end gap-1 p-5 text-right"
           >
             <span class="flex items-center gap-1.5 text-xs text-muted">
               下一篇 <Icon name="chevron-right" class="size-3.5" />
             </span>
             <span class="font-bold transition-colors group-hover:text-primary">
-              {newer.data.title}
+              {older.data.title}
             </span>
           </a>
         )
