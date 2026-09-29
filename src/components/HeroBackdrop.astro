@@ -89,3 +89,86 @@ const images = hero.images;
     }
   }
 </style>
+
+<script>
+  /**
+   * 多层水波动效（WAAPI 驱动）：动画对象跟随元素。
+   * transition:persist 跨页搬移元素时，动画的时间线还挂在旧文档上会冻结——
+   * 换页后重新绑定到当前文档时间线并恢复局部时间，波浪相位连续不抽搐、不卡住。
+   */
+  function startWaves() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const presets: {
+      keyframes: Keyframe[];
+      duration: number;
+      direction: PlaybackDirection;
+    }[] = [
+      {
+        keyframes: [
+          { transform: 'translate3d(0, -9px, 0)' },
+          { transform: 'translate3d(-25%, 7px, 0)' },
+          { transform: 'translate3d(-50%, -9px, 0)' },
+        ],
+        duration: 24000,
+        direction: 'reverse',
+      },
+      {
+        keyframes: [
+          { transform: 'translate3d(0, 6px, 0)' },
+          { transform: 'translate3d(-25%, -8px, 0)' },
+          { transform: 'translate3d(-50%, 6px, 0)' },
+        ],
+        duration: 15000,
+        direction: 'normal',
+      },
+      {
+        keyframes: [
+          { transform: 'translate3d(0, -5px, 0)' },
+          { transform: 'translate3d(-25%, 5px, 0)' },
+          { transform: 'translate3d(-50%, -5px, 0)' },
+        ],
+        duration: 10000,
+        direction: 'normal',
+      },
+    ];
+    const kinds = ['wave-back', 'wave-mid', 'wave-front'];
+    document
+      .querySelectorAll<HTMLElement>('.hero-waves .wave')
+      .forEach((wave) => {
+        const preset = presets.find((p, i) => wave.classList.contains(kinds[i]));
+        if (!preset) return;
+        const existing = wave
+          .getAnimations()
+          .filter((a): a is Animation => a instanceof Animation);
+        if (existing.length > 0) {
+          // 持久层跨页搬移：动画还在但时间线挂在旧文档上已冻结，
+          // 重新绑定到当前文档时间线并恢复局部时间（相位连续不跳变）
+          for (const anim of existing) {
+            const t = anim.currentTime;
+            try {
+              anim.timeline = document.timeline;
+              if (t !== null) anim.currentTime = t;
+            } catch {
+              anim.cancel();
+              wave.animate(preset.keyframes, {
+                duration: preset.duration,
+                iterations: Infinity,
+                direction: preset.direction,
+                easing: 'linear',
+              });
+            }
+          }
+          return;
+        }
+        wave.animate(preset.keyframes, {
+          duration: preset.duration,
+          iterations: Infinity,
+          direction: preset.direction,
+          easing: 'linear',
+        });
+      });
+  }
+  startWaves();
+  document.addEventListener('astro:page-load', startWaves);
+  document.addEventListener('site:settings', startWaves);
+</script>
