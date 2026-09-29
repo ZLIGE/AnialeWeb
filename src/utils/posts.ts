@@ -2,11 +2,13 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 
 export type Post = CollectionEntry<'posts'>;
 
-/** 获取全部非草稿文章，按发布时间倒序 */
+/** 获取全部非草稿文章：置顶优先，其余按发布时间倒序 */
 export async function getSortedPosts(): Promise<Post[]> {
   const posts = await getCollection('posts', ({ data }) => !data.draft);
   return posts.sort(
-    (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
+    (a, b) =>
+      (b.data.pinned ? 1 : 0) - (a.data.pinned ? 1 : 0) ||
+      b.data.published.valueOf() - a.data.published.valueOf()
   );
 }
 

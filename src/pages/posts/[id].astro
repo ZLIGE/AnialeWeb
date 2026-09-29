@@ -1,5 +1,6 @@
 ---
 import { render } from 'astro:content';
+import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import type { Post } from '../../utils/posts';
 import {
   getSortedPosts,
@@ -24,13 +25,67 @@ interface Props {
 
 const { post } = Astro.props;
 const { Content, headings } = await render(post);
-const { title, published, updated, description, image, tags, category } =
-  post.data;
+const {
+  title,
+  published,
+  updated,
+  description,
+  image,
+  tags,
+  category,
+  password,
+  passwordHint,
+} = post.data;
+
+// ── 加密文章：构建期用密码派生密钥（PBKDF2 → AES-GCM）加密渲染后的正文，
+//    页面源码中不存在明文，前端输入正确密码后才能解密还原 ──
+async function encryptHtml(html: string, pwd: string) {
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(pwd),
+    'PBKDF2',
+    false,
+    ['deriveKey'],
+  );
+  const key = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 120000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt'],
+  );
+  const data = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    enc.encode(html),
+  );
+  const b64 = (buf: ArrayBuffer) => {
+    const bytes = new Uint8Array(buf);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000)
+      bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  };
+  return { salt: b64(salt), iv: b64(iv), data: b64(data) };
+}
+
+let encrypted: { salt: string; iv: string; data: string } | null = null;
+if (password) {
+  const container = await AstroContainer.create();
+  const html = await container.renderToString(Content);
+  encrypted = await encryptHtml(html, password);
+}
 
 const allPosts = await getSortedPosts();
 const index = allPosts.findIndex((p) => p.id === post.id);
 const newer = index > 0 ? allPosts[index - 1] : undefined;
-const older = index >= 0 && index < allPosts.length - 1 ? allPosts[index + 1] : undefined;
+const older =
+  index >= 0 && index < allPosts.length - 1
+    ? allPosts[index + 1]
+    : undefined;
 const words = countWords(post.body ?? '');
 ---
 
@@ -44,10 +99,13 @@ const words = countWords(post.body ?? '');
     />
   </Fragment>
   <div class="flex flex-col gap-5">
-    <!-- 目录（窄屏折叠卡片） -->
-    <div class="xl:hidden">
-      <TableOfContents headings={headings} variant="collapse" />
-    </div>
+    {
+      !password && (
+        <div class="xl:hidden">
+          <TableOfContents headings={headings} variant="collapse" />
+        </div>
+      )
+    }
 
     <div class="flex flex-col gap-5 xl:flex-row xl:items-start">
       <article class="card min-w-0 flex-1 overflow-hidden">
@@ -69,6 +127,14 @@ const words = countWords(post.body ?? '');
             >
               {category}
             </a>
+            {
+              password && (
+                <span class="inline-flex items-center gap-1 rounded-full bg-primary/12 px-2.5 py-0.5 font-medium text-primary">
+                  <Icon name="lock" class="size-3.5" />
+                  已加密
+                </span>
+              )
+            }
             <span class="inline-flex items-center gap-1">
               <Icon name="calendar" class="size-3.5" />
               发布于 {formatDate(published)}
@@ -101,16 +167,90 @@ const words = countWords(post.body ?? '');
 
           <hr class="my-6 border-line" />
 
-          <div class="prose-anime">
-            <Content />
-          </div>
+          {password && encrypted ? (
+            <div
+              data-unlock-card
+              class="grid overflow-hidden rounded-2xl border border-line sm:grid-cols-[2fr_3fr]"
+            >
+              <div class="relative hidden items-center justify-center bg-linear-160 from-primary/25 via-accent/20 to-primary/10 sm:flex sm:min-h-[300px]">
+                <div class="flex size-20 items-center justify-center rounded-full bg-primary text-white shadow-lift ring-8 ring-primary/20">
+                  <Icon name="lock" class="size-9" />
+                </div>
+              </div>
+              <div class="p-6 sm:p-8">
+                <div class="flex items-start gap-3.5">
+                  <span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
+                    <Icon name="file-text" class="size-6" />
+                  </span>
+                  <div>
+                    <h2 class="text-xl font-bold">密码保护</h2>
+                    <p class="mt-1 text-sm leading-relaxed text-muted">
+                      这篇文章已加密，输入正确密码后即可查看内容。
+                    </p>
+                  </div>
+                </div>
+                {passwordHint && (
+                  <div class="mt-5 flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-3 text-sm text-primary">
+                    <Icon name="key" class="size-4 shrink-0" />
+                    <span>提示：{passwordHint}</span>
+                  </div>
+                )}
+                <form class="mt-5 flex flex-col gap-3" data-unlock-form>
+                  <label class="relative block">
+                    <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted">
+                      <Icon name="lock" class="size-4" />
+                    </span>
+                    <input
+                      type="password"
+                      data-unlock-input
+                      placeholder="请输入密码"
+                      autocomplete="off"
+                      class="w-full rounded-xl border border-line bg-primary/5 py-3 pl-11 pr-12 text-sm outline-none transition-colors placeholder:text-muted/70 focus:border-primary"
+                    />
+                    <button
+                      type="button"
+                      data-unlock-eye
+                      class="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted transition-colors hover:text-primary"
+                      aria-label="显示或隐藏密码"
+                    >
+                      <Icon name="eye" class="size-4.5" />
+                    </button>
+                  </label>
+                  <p data-unlock-error class="hidden text-sm text-red-500">
+                    密码错误，请重试
+                  </p>
+                  <button
+                    type="submit"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-medium text-white transition-all hover:bg-primary-deep"
+                  >
+                    <Icon name="lock" class="size-4" />
+                    解锁文章
+                  </button>
+                </form>
+              </div>
+            </div>
+          ) : (
+            <div class="prose-anime">
+              <Content />
+            </div>
+          )}
+          {password && encrypted && (
+            <div
+              class="prose-anime hidden"
+              data-encrypted-content
+              data-encrypted-payload={JSON.stringify(encrypted)}
+            />
+          )}
         </div>
       </article>
 
-      <!-- 目录（宽屏侧栏） -->
-      <aside class="sticky top-20 hidden w-64 shrink-0 self-start xl:block">
-        <TableOfContents headings={headings} variant="sticky" />
-      </aside>
+      {
+        !password && (
+          <aside class="sticky top-20 hidden w-64 shrink-0 self-start xl:block">
+            <TableOfContents headings={headings} variant="sticky" />
+          </aside>
+        )
+      }
     </div>
 
     <!-- 上一篇 / 下一篇 -->
@@ -149,4 +289,69 @@ const words = countWords(post.body ?? '');
       }
     </nav>
   </div>
+  {password && encrypted && (
+    <script is:inline data-astro-rerun>
+      (function () {
+        var payloadEl = document.querySelector('[data-encrypted-payload]');
+        if (!payloadEl) return;
+        var payload = JSON.parse(payloadEl.dataset.encryptedPayload);
+        var form = document.querySelector('[data-unlock-form]');
+        if (!form) return;
+        var input = form.querySelector('[data-unlock-input]');
+        var error = form.querySelector('[data-unlock-error]');
+        var eye = form.querySelector('[data-unlock-eye]');
+        var card = document.querySelector('[data-unlock-card]');
+        var content = document.querySelector('[data-encrypted-content]');
+
+        eye.addEventListener('click', function () {
+          input.type = input.type === 'password' ? 'text' : 'password';
+        });
+
+        function b64ToBytes(b64) {
+          var bin = atob(b64);
+          var bytes = new Uint8Array(bin.length);
+          for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          return bytes;
+        }
+
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var pwd = input.value;
+          if (!pwd) return;
+          var enc = new TextEncoder();
+          var keyMaterial = crypto.subtle.importKey(
+            'raw',
+            enc.encode(pwd),
+            'PBKDF2',
+            false,
+            ['deriveKey']
+          );
+          crypto.subtle
+            .deriveKey(
+              { name: 'PBKDF2', salt: b64ToBytes(payload.salt), iterations: 120000, hash: 'SHA-256' },
+              keyMaterial,
+              { name: 'AES-GCM', length: 256 },
+              false,
+              ['decrypt']
+            )
+            .then(function (key) {
+              return crypto.subtle.decrypt(
+                { name: 'AES-GCM', iv: b64ToBytes(payload.iv) },
+                key,
+                b64ToBytes(payload.data)
+              );
+            })
+            .then(function (plain) {
+              content.innerHTML = new TextDecoder().decode(plain);
+              content.classList.remove('hidden');
+              card.classList.add('hidden');
+              error.classList.add('hidden');
+            })
+            .catch(function () {
+              error.classList.remove('hidden');
+            });
+        });
+      })();
+    </script>
+  )}
 </BaseLayout>

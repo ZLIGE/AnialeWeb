@@ -13,21 +13,22 @@ interface Props {
 }
 
 const { post } = Astro.props;
-const { title, description, published, tags, category, image } = post.data;
+const {
+  title,
+  description,
+  published,
+  tags,
+  category,
+  image,
+  pinned,
+  password,
+} = post.data;
 ---
 
 <article class="card lift group relative overflow-hidden">
   <!-- 拉伸链接：覆盖整卡，点击任意空白处进入文章。
        z-10：悬停时封面图的 scale 变换会创建层叠上下文抬升图片，
        链接必须恒定压在其上，否则悬停后点击图片区域会失效 -->
-  <a
-    href={`/posts/${post.id}`}
-    class="absolute inset-0 z-10"
-    aria-label={title}
-  >
-    <span class="sr-only">{title}</span>
-  </a>
-
   <div class="post-card-inner flex items-stretch gap-4">
     <div
       class:list={[
@@ -36,6 +37,22 @@ const { title, description, published, tags, category, image } = post.data;
       ]}
     >
       <div class="flex items-center gap-2 text-xs text-muted">
+        {
+          pinned && (
+            <span class="relative z-10 inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 font-medium text-accent">
+              <Icon name="pin" class="size-3" />
+              置顶
+            </span>
+          )
+        }
+        {
+          password && (
+            <span class="relative z-10 inline-flex items-center gap-1 rounded-full bg-primary/12 px-2 py-0.5 text-primary">
+              <Icon name="lock" class="size-3" />
+              已加密
+            </span>
+          )
+        }
         <a
           href={`/categories/${categorySlug(category)}`}
           class="relative z-10 rounded-full bg-primary/12 px-2.5 py-0.5 font-medium text-primary transition-colors hover:bg-primary hover:text-white"
@@ -48,9 +65,18 @@ const { title, description, published, tags, category, image } = post.data;
         </span>
       </div>
       <h2
-        class="mt-2.5 line-clamp-2 text-lg font-bold transition-colors group-hover:text-primary sm:text-xl"
+        class="mt-2.5 line-clamp-2 text-lg font-bold sm:text-xl"
       >
-        {title}
+        <a
+          href={`/posts/${post.id}`}
+          class="group/title transition-colors hover:text-primary"
+        >
+          {title}
+          <Icon
+            name="chevron-right"
+            class="inline-block size-4 -translate-x-1 opacity-0 transition-all duration-300 group-hover/title:translate-x-0.5 group-hover/title:opacity-100"
+          />
+        </a>
       </h2>
       <p class="mt-2 line-clamp-2 text-sm text-muted">
         {description || '（这篇主人偷懒没有写摘要喵～）'}
@@ -67,20 +93,24 @@ const { title, description, published, tags, category, image } = post.data;
     </div>
     {
       image && (
-        <div class="post-card-cover hidden w-44 shrink-0 self-stretch sm:block lg:w-52">
+        <a
+          href={`/posts/${post.id}`}
+          aria-label={title}
+          class="post-card-cover relative block hidden w-44 shrink-0 self-stretch overflow-hidden sm:block lg:w-52"
+        >
           <img
             src={image}
             alt={`《${title}》封面`}
             class="size-full object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-75"
             loading="lazy"
           />
-        </div>
+        </a>
       )
     }
   </div>
 
-  <!-- 右侧进入箭头：有封面时悬停卡片才浮现纯箭头（无圆形包裹），无封面时为独立圆角胶囊。
-       pointer-events-none 让点击穿透到下方的拉伸链接 -->
+  <!-- 右侧进入箭头：有封面时悬停卡片浮现纯箭头（纯装饰，点击由封面链接承接）；
+       无封面时箭头胶囊本身是进入文章的链接 -->
     {
       image ? (
         <div class="post-card-arrow pointer-events-none absolute inset-y-0 right-0 hidden w-44 items-center justify-center sm:flex lg:w-52">
@@ -89,13 +119,17 @@ const { title, description, published, tags, category, image } = post.data;
           </span>
         </div>
       ) : (
-        <div class="post-card-arrow post-card-arrow-plain pointer-events-none absolute inset-y-0 right-0 hidden items-center pr-3 sm:flex">
-          <div class="post-card-arrow-capsule flex h-4/5 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary/20">
+        <div class="post-card-arrow post-card-arrow-plain absolute inset-y-0 right-0 hidden items-center pr-3 sm:flex">
+          <a
+            href={`/posts/${post.id}`}
+            aria-label={title}
+            class="post-card-arrow-capsule pointer-events-auto flex h-4/5 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary/20"
+          >
             <Icon
               name="chevron-right"
               class="size-5 transition-transform duration-300 group-hover:translate-x-0.5"
             />
-          </div>
+          </a>
         </div>
       )
     }

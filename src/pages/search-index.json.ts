@@ -34,7 +34,8 @@ export const GET: APIRoute = async () => {
       category: p.data.category,
       tags: p.data.tags,
       url: `/posts/${p.id}/`,
-      text: body ? plain(body).slice(0, 5000) : '',
+      // 加密文章不写入正文全文（防止搜索索引泄露内容）
+      text: p.data.password ? '' : body ? plain(body).slice(0, 5000) : '',
     };
   });
 

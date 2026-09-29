@@ -67,51 +67,17 @@ const images = hero.images;
     width: 200%;
     height: calc(100% + 20px);
   }
+  /* 波浪动效由 WAAPI 驱动（见下方脚本）：动画绑定在元素而非文档上，
+     transition:persist 跨页搬移元素时相位保持连续，不会抽搐 */
   .wave-back {
     fill: rgb(255 255 255 / 0.14);
-    animation: hero-wave-a 24s linear infinite reverse;
   }
   .wave-mid {
     fill: rgb(255 255 255 / 0.24);
-    animation: hero-wave-b 15s linear infinite;
   }
   .wave-front {
     fill: var(--bg);
     transition: fill 0.3s ease;
-    animation: hero-wave-c 10s linear infinite;
-  }
-  @keyframes hero-wave-a {
-    0% {
-      transform: translate3d(0, -9px, 0);
-    }
-    50% {
-      transform: translate3d(-25%, 7px, 0);
-    }
-    100% {
-      transform: translate3d(-50%, -9px, 0);
-    }
-  }
-  @keyframes hero-wave-b {
-    0% {
-      transform: translate3d(0, 6px, 0);
-    }
-    50% {
-      transform: translate3d(-25%, -8px, 0);
-    }
-    100% {
-      transform: translate3d(-50%, 6px, 0);
-    }
-  }
-  @keyframes hero-wave-c {
-    0% {
-      transform: translate3d(0, -5px, 0);
-    }
-    50% {
-      transform: translate3d(-25%, 5px, 0);
-    }
-    100% {
-      transform: translate3d(-50%, -5px, 0);
-    }
   }
   /* 面板「水波纹动画」关闭时彻底去除波浪层 */
   :global([data-hero-ripple='off']) .hero-waves {

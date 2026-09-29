@@ -18,6 +18,12 @@ const posts = defineCollection({
     category: z.string().default('未分类'),
     /** 草稿：true 时不会出现在列表 / RSS 中 */
     draft: z.boolean().default(false),
+    /** 置顶：true 时在文章列表最顶部显示 */
+    pinned: z.boolean().default(false),
+    /** 加密密码：设置后正文构建期 AES-GCM 加密，页面输入密码解锁 */
+    password: z.string().optional(),
+    /** 密码提示：显示在解锁卡片上 */
+    passwordHint: z.string().optional(),
   }),
 });
 
