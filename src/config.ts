@@ -92,7 +92,7 @@ export const siteConfig = {
     /** 全站樱花飘落（自动尊重系统「减少动态效果」设置） */
     sakura: true,
     /** 看板娘形态：'elaina' 单图活立绘 ｜ 'live2d' Live2D 模型 ｜ 'none' 关闭 */
-    companion: 'elaina' as 'elaina' | 'live2d' | 'none',
+    companion: 'live2d' as 'elaina' | 'live2d' | 'none',
   },
 
   /**
@@ -103,16 +103,13 @@ export const siteConfig = {
   live2d: {
     /** 停靠位置：left | right */
     dockedPosition: 'right' as 'left' | 'right',
-    /** 状态条 / 菜单的主题色（梦幻紫） */
+    /** 状态条 / 菜单 / 提示气泡的主题色（梦幻紫） */
     primaryColor: '#8b5cf6',
-    /** 模型列表（可在菜单中依次切换） */
+    /** 模型列表（可在菜单中依次切换；l2d-widget 自动识别 Cubism 2/5） */
     models: [
       {
-        // shizuku：Live2D 官方示例萌系模型（fastly.jsdelivr 镜像，稳定可达）
+        // shizuku：Live2D 官方示例萌系模型（Cubism 2，fastly.jsdelivr 镜像，稳定可达）
         path: 'https://fastly.jsdelivr.net/gh/guansss/pixi-live2d-display@master/test/assets/shizuku/shizuku.model.json',
-        scale: 0.1,
-        position: [0, 60] as [number, number],
-        stageStyle: { height: 450 },
       },
     ],
   },
