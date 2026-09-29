@@ -115,54 +115,18 @@ const isActive = (link: string) =>
 </div>
 
 <style>
-  /* 顶部：完全透明融入页面；滚动后：近不透明卡片。
+  /* 导航栏：始终为悬浮圆角毛玻璃卡片（参考 Mizuki 样式）——
+     从页面顶部就与壁纸明确区分，不存在透明→实底的切换瞬间
+     （此前滚动时短暂无法分辨的根源）。
      不使用 backdrop-filter：滚动跨越阈值时它会被创建/销毁，
-     Chromium 合成新层的瞬间会在页面顶部闪出一条白色发丝线；
-     背景 96% 不透明后毛玻璃本身也无可见效果 */
-  #site-navbar.is-scrolled {
+     Chromium 合成新层的瞬间会在页面顶部闪出一条白色发丝线 */
+  #site-navbar {
+    top: 0.75rem;
+    left: 1rem;
+    right: 1rem;
+    border-radius: 1rem;
+    border: 1px solid var(--line);
     background-color: color-mix(in oklch, var(--card) 96%, transparent);
-    border-bottom: 1px solid var(--line);
     box-shadow: var(--shadow-nav);
   }
-  /* 悬浮于 Hero 大图之上时：文字与图标用白色（调色板弹层除外） */
-  #site-navbar.over-hero .navbar-row :where(a, button, span) {
-    color: #fff;
-  }
-  #site-navbar.over-hero .navbar-row .palette-pop :where(a, button, span) {
-    color: var(--t-main);
-  }
-  #site-navbar.over-hero .navbar-row .palette-pop {
-    color: var(--t-main);
-  }
 </style>
-
-<script>
-  // 滚动状态：顶部透明（首页 Hero 上为白字）↔ 毛玻璃卡片；
-  // window 监听只绑定一次，处理器惰性查询当前头部。
-  // 壁纸覆盖模式下导航栏是悬浮玻璃卡片：跳过 over-hero 白字逻辑。
-  function updateNavbar() {
-    const header = document.getElementById('site-navbar');
-    if (!header) return;
-    const scrolled = window.scrollY > 24;
-    header.classList.toggle('is-scrolled', scrolled);
-    const cover =
-      document.documentElement.getAttribute('data-hero-mode') === 'cover';
-    const heroEl = document.getElementById('hero');
-    const overHero =
-      !cover &&
-      document.body.dataset.hasHero === 'true' &&
-      !!heroEl &&
-      window.scrollY < heroEl.offsetHeight - 64;
-    header.classList.toggle('over-hero', overHero);
-  }
-  if (
-    !(window as unknown as { __navScrollBound?: boolean }).__navScrollBound
-  ) {
-    (window as unknown as { __navScrollBound: boolean }).__navScrollBound = true;
-    window.addEventListener('scroll', updateNavbar, { passive: true });
-    // 调色板切换壁纸模式后立即重算（over-hero / is-scrolled 状态）
-    document.addEventListener('site:settings', updateNavbar);
-  }
-  updateNavbar();
-  document.addEventListener('astro:page-load', updateNavbar);
-</script>
