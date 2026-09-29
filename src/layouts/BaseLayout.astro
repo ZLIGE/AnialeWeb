@@ -40,7 +40,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang={siteConfig.locale.split('-')[0]} data-theme="dark">
+<html lang={siteConfig.locale.split('-')[0]} data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -66,7 +66,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     />
     <meta property="og:site_name" content={siteConfig.title} />
 
-    <!-- 主题初始化：默认暗黑，记住用户手动选择；
+    <!-- 主题初始化：默认明亮，记住用户手动选择；
          astro:after-swap 后重新应用做兜底 -->
     <script is:inline>
       (() => {
@@ -76,7 +76,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
             theme = localStorage.getItem('theme');
           } catch {}
           if (theme !== 'light' && theme !== 'dark') {
-            theme = 'dark';
+            theme = 'light';
           }
           document.documentElement.dataset.theme = theme;
         };
@@ -126,7 +126,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       document.addEventListener('astro:before-swap', (e) => {
         const cur = document.documentElement;
         const next = e.newDocument.documentElement;
-        next.dataset.theme = cur.dataset.theme || 'dark';
+        next.dataset.theme = cur.dataset.theme || 'light';
         next.style.setProperty('--hue', cur.style.getPropertyValue('--hue'));
         next.style.setProperty('--hue2', cur.style.getPropertyValue('--hue2'));
         // 外观面板设置（壁纸模式等）也同步到新文档，防换页闪回默认
