@@ -10,6 +10,21 @@
 <!-- 持久宿主：看板娘的 DOM 移入这里后跨页保留，不会被换页清除 -->
 <div id="l2d-host" transition:persist="l2d-widget"></div>
 
+<style>
+  /* 宿主固定为全屏透明层：看板娘（内部 fixed 定位的画布）坐标
+     永远相对视口，不随页面内容高度/滚动漂移；pointer-events 穿透，
+     仅模型画布本身可交互（拖动/点击） */
+  #l2d-host {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    pointer-events: none;
+  }
+  #l2d-host canvas {
+    pointer-events: auto;
+  }
+</style>
+
 <script>
   import { siteConfig } from '../config';
 
@@ -68,7 +83,14 @@
           .forEach((el) => host.appendChild(el));
 
         const canvas = host.querySelector('canvas');
-        if (canvas) setupDragging(canvas as HTMLCanvasElement);
+        if (canvas) {
+          setupDragging(canvas as HTMLCanvasElement);
+          // 入场滑入动画在部分页面不触发（transform 卡在 520px 出场位，
+          // 看板娘被推出视口外"消失"），初始化后直接归零保证始终可见；
+          // sleep() 的隐藏与再次唤醒不受影响（归零只在初始化时执行一次）
+          const wrapper = canvas.parentElement;
+          if (wrapper) wrapper.style.transform = 'none';
+        }
       })
       .catch((err) => console.warn('[Live2D] 看板娘加载失败，已自动跳过：', err));
   }
