@@ -7,6 +7,9 @@
  */
 ---
 
+<!-- 持久宿主：看板娘的 DOM 移入这里后跨页保留，不会被换页清除 -->
+<div id="l2d-host" transition:persist="l2d-widget"></div>
+
 <script>
   import { siteConfig } from '../config';
 
@@ -43,8 +46,10 @@
   if (window.matchMedia('(min-width: 768px)').matches) {
     import('l2d-widget')
       .then(({ createWidget }) => {
-        // 记录创建前已存在的 canvas，用于识别看板娘自己的画布
-        const known = new Set(document.querySelectorAll('canvas'));
+        const host = document.getElementById('l2d-host');
+        if (!host) return;
+        // 记录创建前已存在的 body 子元素，用于识别看板娘生成的节点
+        const known = new Set([...document.body.children]);
 
         createWidget({
           model: live2d.models.map(({ path, scale }) => ({ path, scale })),
@@ -57,9 +62,12 @@
           },
         });
 
-        const canvas = [...document.querySelectorAll('canvas')].find(
-          (c) => !known.has(c)
-        );
+        // 组件生成的所有固定定位元素移入持久宿主（换页不被清除）
+        [...document.body.children]
+          .filter((el) => !known.has(el) && el !== host)
+          .forEach((el) => host.appendChild(el));
+
+        const canvas = host.querySelector('canvas');
         if (canvas) setupDragging(canvas as HTMLCanvasElement);
       })
       .catch((err) => console.warn('[Live2D] 看板娘加载失败，已自动跳过：', err));
