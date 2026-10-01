@@ -460,6 +460,16 @@ html[data-hero-mode='cover'] #site-navbar.over-hero .navbar-row :where(a, button
   display: none;
 }
 
+/* Hero 标题层整层覆盖在横幅上方（inset-0），会把导航栏下拉面板（调色板等）
+   一起盖住导致滑条/按钮无法点击——整层指针穿透，仅链接和按钮可点 */
+[data-hero-caption] {
+  pointer-events: none;
+}
+[data-hero-caption] a,
+[data-hero-caption] button {
+  pointer-events: auto;
+}
+
 /* 横幅标题开关 */
 [data-hero-title='off'] [data-hero-caption] {
   display: none;

@@ -79,6 +79,12 @@ const images = hero.images;
     fill: var(--bg);
     transition: fill 0.3s ease;
   }
+  /* 壁纸层纯视觉：图片/遮罩/波浪不拦截任何指针交互
+     （否则全屏/覆盖模式下整层会挡住调色板等浮层的操作） */
+  .hero-backdrop,
+  .hero-backdrop :where(img, div, svg, path) {
+    pointer-events: none;
+  }
   /* 面板「水波纹动画」关闭时彻底去除波浪层 */
   :global([data-hero-ripple='off']) .hero-waves {
     display: none;
