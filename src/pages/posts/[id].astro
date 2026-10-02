@@ -13,6 +13,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Icon from '../../components/Icon.astro';
 import TableOfContents from '../../components/TableOfContents.astro';
 import PostBanner from '../../components/PostBanner.astro';
+import Comment from '../../components/Comment.astro';
 
 export async function getStaticPaths() {
   const posts = await getSortedPosts();
@@ -288,6 +289,9 @@ const words = countWords(post.body ?? '');
         )
       }
     </nav>
+
+    <!-- 评论区（giscus；加密文章不显示） -->
+    {!password && <Comment />}
   </div>
   {password && encrypted && (
     <script is:inline data-astro-rerun>

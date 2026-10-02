@@ -80,6 +80,31 @@ export const siteConfig = {
   postsPerPage: 8,
 
   /**
+   * 评论系统（giscus）：基于 GitHub Discussions，静态站免后端。
+   * 前置条件：仓库公开 + 已开启 Discussions + 安装 giscus App
+   * （https://github.com/apps/giscus）。repoId / categoryId 已通过
+   * GitHub API 获取；换仓库后可到 https://giscus.app 重新生成。
+   */
+  comments: {
+    /** 是否启用评论区 */
+    enabled: true,
+    /** 接收讨论的 GitHub 仓库 */
+    repo: 'ZLIGE/AnialeWeb' as `${string}/${string}`,
+    repoId: 'R_kgDOUtAvJw',
+    /** 讨论分类（Announcements 类型：评论由 giscus 应用代建，访客只回复） */
+    category: 'Announcements',
+    categoryId: 'DIC_kwDOUtAvJ84DG4RL',
+    /** 页面与讨论的对应方式：pathname 按路径 / title 按文章标题 */
+    mapping: 'pathname' as 'pathname' | 'url' | 'title',
+    /** 是否显示评论区顶部的 GitHub Reactions 表情 */
+    reactionsEnabled: true,
+    /** 评论输入框位置：top（在上）/ bottom（在下） */
+    inputPosition: 'top' as 'top' | 'bottom',
+    /** 评论区界面语言 */
+    lang: 'zh-CN',
+  },
+
+  /**
    * 首页公告条：text 留空 '' 则不显示；修改文字后，已关闭的公告会重新出现
    */
   announcement: {

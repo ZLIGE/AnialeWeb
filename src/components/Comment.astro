@@ -1,0 +1,107 @@
+---
+/**
+ * 评论系统（giscus）：基于 GitHub Discussions 的免后端评论区。
+ * - 仅当 config.ts comments.enabled 时渲染；加密文章请在页面侧自行跳过
+ * - 滚动到评论区附近才注入 giscus 脚本（首屏零开销）
+ * - 明暗主题跟随 <html data-theme> 实时切换（postMessage 通知 giscus iframe）
+ * - 视图过渡换页后由 data-astro-rerun 幂等重跑
+ */
+import Icon from './Icon.astro';
+import { siteConfig } from '../config';
+
+const c = siteConfig.comments;
+---
+
+{
+  c.enabled && (
+    <section
+      class="card p-6 sm:p-8"
+      data-comments
+      aria-label="评论区"
+      data-repo={c.repo}
+      data-repo-id={c.repoId}
+      data-category={c.category}
+      data-category-id={c.categoryId}
+      data-mapping={c.mapping}
+      data-reactions={c.reactionsEnabled ? '1' : '0'}
+      data-input-position={c.inputPosition}
+      data-lang={c.lang}
+    >
+      <h2 class="flex items-center gap-2 text-lg font-bold">
+        <Icon name="message" class="size-5 text-primary" />
+        评论
+      </h2>
+      <p class="mt-1 text-sm text-muted">
+        留言基于 GitHub Discussions，点击输入框使用 GitHub 账号登录后即可发言。
+      </p>
+      <div class="giscus mt-5" data-giscus-mount />
+    </section>
+  )
+}
+
+<script is:inline data-astro-rerun>
+  (function () {
+    var section = document.querySelector('[data-comments]');
+    if (!section) return;
+    var box = section.querySelector('[data-giscus-mount]');
+    if (!box || box.dataset.giscusLoaded) return;
+
+    function currentTheme() {
+      return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    }
+
+    // 明暗切换实时同步给 giscus（区块脱离文档后自动断开监听）
+    function sendTheme() {
+      if (!section.isConnected) return;
+      var frame = document.querySelector('iframe.giscus-frame');
+      if (!frame || !frame.contentWindow) return;
+      frame.contentWindow.postMessage(
+        { giscus: { setConfig: { theme: currentTheme() } } },
+        'https://giscus.app'
+      );
+    }
+    var themeObserver = new MutationObserver(sendTheme);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+
+    function load() {
+      if (box.dataset.giscusLoaded) return;
+      box.dataset.giscusLoaded = '1';
+      var s = document.createElement('script');
+      s.src = 'https://giscus.app/client.js';
+      s.async = true;
+      s.crossOrigin = 'anonymous';
+      s.setAttribute('data-repo', section.dataset.repo);
+      s.setAttribute('data-repo-id', section.dataset.repoId);
+      s.setAttribute('data-category', section.dataset.category);
+      s.setAttribute('data-category-id', section.dataset.categoryId);
+      s.setAttribute('data-mapping', section.dataset.mapping);
+      s.setAttribute('data-strict', '0');
+      s.setAttribute('data-reactions-enabled', section.dataset.reactions);
+      s.setAttribute('data-emit-metadata', '0');
+      s.setAttribute('data-input-position', section.dataset.inputPosition);
+      s.setAttribute('data-theme', currentTheme());
+      s.setAttribute('data-lang', section.dataset.lang);
+      s.setAttribute('data-loading', 'lazy');
+      box.appendChild(s);
+    }
+
+    // 懒加载：评论区进入视口前 200px 才注入脚本
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(
+        function (entries) {
+          if (entries.some(function (e) { return e.isIntersecting; })) {
+            io.disconnect();
+            load();
+          }
+        },
+        { rootMargin: '200px 0px' }
+      );
+      io.observe(section);
+    } else {
+      load();
+    }
+  })();
+</script>
