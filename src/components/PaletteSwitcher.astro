@@ -383,6 +383,8 @@ const { direction = 'up' } = Astro.props;
     }
 
     // ── 主题色相 ───────────────────────────────────────────
+    var activeSlider = null; // 正在被用户拖动的滑条：期间禁止回写，否则 Chromium 会取消原生拖拽
+
     function getHue() {
       try {
         var p = JSON.parse(localStorage.getItem('palette'));
@@ -396,7 +398,7 @@ const { direction = 'up' } = Astro.props;
       root.style.setProperty('--hue2', String(hue2));
       if (save) lsSet('palette', JSON.stringify({ hue: hue, hue2: hue2 }));
       document.querySelectorAll('.hue-slider').forEach(function (s) {
-        s.value = String(hue);
+        if (s !== activeSlider) s.value = String(hue);
       });
       document.querySelectorAll('.hue-badge').forEach(function (b) {
         b.textContent = String(hue);
@@ -459,7 +461,7 @@ const { direction = 'up' } = Astro.props;
         });
         var slider = pop.querySelector('.hue-slider');
         var badge = pop.querySelector('.hue-badge');
-        if (slider) slider.value = String(hue);
+        if (slider && slider !== activeSlider) slider.value = String(hue);
         if (badge) badge.textContent = String(hue);
       });
     }
@@ -532,6 +534,14 @@ const { direction = 'up' } = Astro.props;
         }
       });
 
+      // 记录正在拖动的滑条（拖动期间不回写其值，见 activeSlider 说明）
+      var hueSlider = rootEl.querySelector('.hue-slider');
+      if (hueSlider) {
+        hueSlider.addEventListener('pointerdown', function () {
+          activeSlider = hueSlider;
+        });
+      }
+
       // 色相滑条拖动实时换色（paintAll 同步恢复图标显隐）
       pop.addEventListener('input', function (e) {
         var t = e.target;
@@ -556,6 +566,12 @@ const { direction = 'up' } = Astro.props;
             p.classList.remove('open');
           });
         }
+      });
+      window.addEventListener('pointerup', function () {
+        activeSlider = null;
+      });
+      window.addEventListener('pointercancel', function () {
+        activeSlider = null;
       });
     }
 
