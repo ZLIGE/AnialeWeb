@@ -25,6 +25,8 @@
   为对应板块
 - 📝 **完整博客能力**：全文搜索、文章目录（递进包裹高亮）、代码双主题高亮、
   标签、分类、分页、相邻文章导航
+- 💬 **giscus 评论系统**：基于 GitHub Discussions，静态站免后端，懒加载零首屏
+  开销，明暗主题实时跟随站点切换（`comments.enabled` 一键开关）
 - 🌸 **樱花飘落** + 👧 **看板娘双形态**（单图活立绘 / Live2D / 关闭，config 一键切换）
 - ✍️ **萌系字体**：霞鹜文楷（中文）+ Baloo 2（西文），npm 自托管无 CDN 依赖
 - 📡 **RSS / Sitemap / Open Graph** 全套 SEO 基建
@@ -44,12 +46,13 @@ pnpm preview      # 本地预览构建结果
 
 ```
 src/
-├── config.ts          ★ 全站配置（站名/社交/导航/壁纸/特效开关）
+├── config.ts          ★ 全站配置（站名/社交/导航/壁纸/特效/评论）
 ├── content.config.ts  文章字段定义（含置顶与加密字段）
 ├── content/posts/     ★ 你的文章（.md）
 ├── data/              ★ 追番录 / 作品集 / 友链数据
 ├── styles/global.css  主题色、设计令牌与各壁纸模式样式
-├── components/        HeroBackdrop（跨页持久壁纸层）/ 外观面板 / 各横幅等
+├── components/        HeroBackdrop（跨页持久壁纸层）/ PaletteSwitcher（外观面板）
+│                      / Comment（giscus 评论）/ 各横幅等
 ├── layouts/  pages/  utils/
 public/images/hero/    ★ 壁纸图（轮播池）
 public/images/         头像、favicon 等
@@ -121,6 +124,18 @@ passwordHint: 提示文案（可选，展示在解锁卡片上）
 
 右上角调色板 →「主题色」滑条可实时全站换色（记忆选择）；要改默认色相，编辑
 `src/styles/global.css` 顶部 `:root` 中的 `--hue` / `--hue2`。
+
+### 8. 评论系统
+
+评论基于 [giscus](https://giscus.app)（GitHub Discussions），`src/config.ts`
+→ `comments.enabled` 一键开关。换仓库或想换分类时：
+
+1. 仓库需公开并已开启 Discussions（Settings → General → Features）
+2. 安装 [giscus App](https://github.com/apps/giscus) 到仓库
+3. 到 [giscus.app](https://giscus.app) 生成新的 `repoId` / `categoryId`，
+   填入 `comments` 配置段即可
+
+加密文章不显示评论；其余文章的评论自动对应仓库 Announcements 分类下的讨论。
 
 ## 🌐 部署
 

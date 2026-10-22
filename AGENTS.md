@@ -1,12 +1,13 @@
-# AGENTS.md · 星梦小筑（hoshimeno-uptown）
+# AGENTS.md · Ashen 个人博客
 
-Astro 7 + Tailwind CSS 4 + TypeScript 的梦幻紫二次元个人博客，布局参考 Fuwari（全手写实现）。构建产物为纯静态站点。
+Astro 7 + Tailwind CSS 4 + TypeScript 的梦幻紫二次元个人博客，布局参考 Fuwari / Shirone（全手写实现）。构建产物为纯静态站点。
 
 ## 常用命令
 
 ```bash
-pnpm dev        # 开发服务器 http://localhost:4321
-pnpm build      # 静态构建到 dist/（约 17 个页面）
+pnpm dev        # 开发服务器 http://localhost:4321（同时只能起一个实例，
+                # 第二个会报 "Another astro dev server is already running"）
+pnpm build      # 静态构建到 dist/（约 25 个页面）
 pnpm preview    # 预览构建结果
 ```
 
@@ -14,11 +15,14 @@ pnpm preview    # 预览构建结果
 
 | 位置 | 作用 |
 | --- | --- |
-| `src/config.ts` | ★ 全站一站式配置：站点信息、社交、导航、`effects.sakura`、`effects.companion`（看板娘形态） |
+| `src/config.ts` | ★ 全站一站式配置：站点信息、社交、导航、壁纸（`hero`）、特效（`effects`）、评论（`comments`，giscus） |
 | `src/data/*.ts` | 追番录 / 作品集 / 友链数据（增删条目即生效） |
-| `src/content/posts/` | 博客文章（.md，文件名即链接 slug） |
-| `public/images/` | 头像（avatar.jpg）、Banner（banner.svg）、看板娘立绘（elaina.webp） |
-| `src/styles/global.css` | OKLCH 主题变量（`--pr` 紫 / `--accent` 粉）、明暗双主题 |
+| `src/content/posts/` | 博客文章（.md，文件名即链接 slug；frontmatter 支持 `pinned` 置顶、`password`/`passwordHint` 加密） |
+| `src/components/PaletteSwitcher.astro` | 外观面板：色相滑条（OKLCH）/ 壁纸四模式 / 横幅选项 / 列表网格布局，全量记忆 |
+| `src/components/Comment.astro` | giscus 评论区（懒加载 + 明暗主题联动），配置经 `data-*` 从 config 传入 |
+| `src/components/HeroBackdrop.astro` | 跨页持久壁纸层（`transition:persist="hero-backdrop"`，壁纸不闪烁的关键） |
+| `public/images/` | 头像（avatar.jpg）、Banner（banner.svg）、看板娘立绘（elaina.webp）、壁纸（hero/） |
+| `src/styles/global.css` | OKLCH 主题变量、明暗双主题、各壁纸模式（`html[data-hero-mode]`）与覆盖模式导航栏样式 |
 
 ## 已知坑位（改代码前先看）
 
@@ -29,3 +33,8 @@ pnpm preview    # 预览构建结果
 5. **域名警示**：`model.oml2d.com` 与 `oml2d.com` 已于 2026-09 易主为垃圾站，禁止作为模型源/外链；Live2D 模型与外链资源一律优先 `fastly.jsdelivr.net` 镜像（当前模型：pixi-live2d-display 仓库的 shizuku 测试模型）。
 6. **樱花特效必须按时间增量（dt）驱动**：用户屏幕为 241Hz 高刷新率，按帧步进会 4 倍速且左右摆动变成高频抖动（Sakura.astro）。
 7. Live2D 模型如需自制：psd2live（github.com/tsunehimatoi/psd2live）是 Java 桌面工具，输入须为分层 PSD，输出 `.moc3` 后接入 `'live2d'` 形态；它不能处理单张扁平图。
+8. **色相滑条禁止在拖动期间回写自身值**：Chromium 收到程序化 `value` 赋值会终止原生拖拽（表现为「滑块抓不住」）。PaletteSwitcher 用 `activeSlider`（pointerdown → pointerup 窗口期）跳过 `applyHue`/`paintAll` 对该滑条的回写，改动时不要删掉这个守卫。
+9. **壁纸层与横幅标题层必须指针穿透**：`HeroBackdrop` 与 `[data-hero-caption]` 整层 `pointer-events: none`（全屏/覆盖模式下它们盖住导航栏下拉面板，否则调色板滑条/按钮点不到）；标题层内的 `a`/`button` 单独恢复 `auto`。
+10. **giscus 评论前置条件**：仓库公开 + 已开 Discussions + 安装 giscus App，缺一评论区就报 "giscus is not installed"。`repoId`/`categoryId` 换仓库后要到 giscus.app 重新生成；加密文章（`password`）页面侧跳过评论。
+11. **外观设置存 localStorage、BaseLayout 头部脚本首帧前恢复**（无闪烁）：`palette`（色相）、`hero-mode`、`hero-title`、`hero-ripple`、`home-layout`、`theme`（明暗，`<html data-theme>`）。同步入口是 `<html>` 的 data 属性 + `site:settings` 事件，新增设置项照此模式接。
+12. **文章导航语义**：「上一篇」= 列表中更新一篇（更上方），「下一篇」= 更早一篇（更下方），与首页列表顺序一致（[id].astro 中 `newer`/`older` 的取名即此含义，勿再对调）。
