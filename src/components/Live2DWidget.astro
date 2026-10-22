@@ -3,7 +3,7 @@
  * Live2D 看板娘（l2d-widget 驱动——oh-my-live2d 官方后继，配置见 src/config.ts）。
  * - 动态 import 隔离加载：库或模型加载失败时仅打印警告，不影响站点
  * - 移动端不展示（与原 oh-my-live2d 的 mobileDisplay: false 行为一致）
- * - 长按模型画布约 0.3 秒后可拖动改变位置，松手后记忆到 localStorage
+ * - 按住模型画布拖动即可直接改变位置（轻点仍是互动），松手后记忆到 localStorage
  */
 ---
 
@@ -22,6 +22,7 @@
   }
   #l2d-host canvas {
     pointer-events: auto;
+    cursor: grab;
   }
 </style>
 
@@ -29,8 +30,7 @@
   import { siteConfig } from '../config';
 
   const POS_KEY = 'l2d-widget-drag-pos';
-  const LONG_PRESS_MS = 300;
-  /** 长按生效前移动超过该距离视为普通点击/滑动，取消拖动意图 */
+  /** 按下后移动超过该距离即进入拖拽（不足阈值松手 = 轻点互动） */
   const MOVE_CANCEL_PX = 8;
 
   const { live2d } = siteConfig;
@@ -96,21 +96,25 @@
   }
 
   function setupDragging(canvas: HTMLCanvasElement) {
+    // 定位目标：l2d-widget 的 stage 容器（canvas 本身是 static，
+    // position: fixed 的是其父元素——拖拽/恢复必须改父元素的 left/top）
+    const stage = canvas.parentElement as HTMLElement;
+
     const restore = () => {
       const saved = readSaved();
       if (!saved) return;
-      canvas.style.left = `${clamp(
+      stage.style.left = `${clamp(
         saved.left,
         0,
-        window.innerWidth - canvas.offsetWidth
+        window.innerWidth - stage.offsetWidth
       )}px`;
-      canvas.style.top = `${clamp(
+      stage.style.top = `${clamp(
         saved.top,
         0,
-        window.innerHeight - canvas.offsetHeight
+        window.innerHeight - stage.offsetHeight
       )}px`;
-      canvas.style.right = 'auto';
-      canvas.style.bottom = 'auto';
+      stage.style.right = 'auto';
+      stage.style.bottom = 'auto';
     };
 
     // 恢复上次记忆的位置
@@ -118,7 +122,6 @@
 
     let pressing = false;
     let dragMode = false;
-    let pressTimer = 0;
     let pointerId = -1;
     let startX = 0;
     let startY = 0;
@@ -128,20 +131,18 @@
     const cancelPress = () => {
       pressing = false;
       dragMode = false;
-      clearTimeout(pressTimer);
     };
 
     const enterDrag = () => {
-      if (!pressing) return;
       dragMode = true;
-      const rect = canvas.getBoundingClientRect();
+      const rect = stage.getBoundingClientRect();
       startLeft = rect.left;
       startTop = rect.top;
-      canvas.style.left = `${rect.left}px`;
-      canvas.style.top = `${rect.top}px`;
-      canvas.style.right = 'auto';
-      canvas.style.bottom = 'auto';
-      canvas.style.cursor = 'grabbing';
+      stage.style.left = `${rect.left}px`;
+      stage.style.top = `${rect.top}px`;
+      stage.style.right = 'auto';
+      stage.style.bottom = 'auto';
+      stage.style.cursor = 'grabbing';
       document.body.style.userSelect = 'none';
       try {
         canvas.setPointerCapture(pointerId);
@@ -156,7 +157,6 @@
       pointerId = e.pointerId;
       startX = e.clientX;
       startY = e.clientY;
-      pressTimer = window.setTimeout(enterDrag, LONG_PRESS_MS);
     });
 
     window.addEventListener(
@@ -164,23 +164,23 @@
       (e: PointerEvent) => {
         if (!pressing) return;
         if (!dragMode) {
-          // 长按生效前就明显移动 → 是普通滑动/点击，取消拖动意图
+          // 直接拖拽：按下后移动超过阈值即开始拖动（不足阈值松手 = 轻点互动）
           if (
             Math.hypot(e.clientX - startX, e.clientY - startY) > MOVE_CANCEL_PX
           )
-            cancelPress();
+            enterDrag();
           return;
         }
         e.preventDefault();
-        canvas.style.left = `${clamp(
+        stage.style.left = `${clamp(
           startLeft + (e.clientX - startX),
           0,
-          window.innerWidth - canvas.offsetWidth
+          window.innerWidth - stage.offsetWidth
         )}px`;
-        canvas.style.top = `${clamp(
+        stage.style.top = `${clamp(
           startTop + (e.clientY - startY),
           0,
-          window.innerHeight - canvas.offsetHeight
+          window.innerHeight - stage.offsetHeight
         )}px`;
       },
       { passive: false }
@@ -192,15 +192,15 @@
         if (!pressing) return;
         const wasDrag = dragMode;
         cancelPress();
-        canvas.style.cursor = '';
+        stage.style.cursor = '';
         document.body.style.userSelect = '';
         if (!wasDrag) return;
         // 拦截拖动结束事件，避免模型把这次按压当成触摸互动
         e.preventDefault();
         e.stopPropagation();
         save(
-          parseFloat(canvas.style.left) || 0,
-          parseFloat(canvas.style.top) || 0
+          parseFloat(stage.style.left) || 0,
+          parseFloat(stage.style.top) || 0
         );
       },
       true
