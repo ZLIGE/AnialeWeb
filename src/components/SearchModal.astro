@@ -189,6 +189,14 @@ const { title } = siteConfig;
     document.getElementById('search-close').addEventListener('click', close);
     modal.querySelector('.search-mask').addEventListener('click', close);
 
+    // 点击结果链接：先关弹窗再由 Astro 路由导航（弹窗是 transition:persist
+    // 持久元素，不主动关闭会原样盖在换页后的新页面上，看起来像没跳转）
+    results.addEventListener('click', function (e) {
+      if (e.target instanceof Element && e.target.closest('a')) close();
+    });
+    // 兜底：任何视图过渡换页完成后都收起弹窗（避免持久化残留遮挡）
+    document.addEventListener('astro:after-swap', close);
+
     var debounce = 0;
     input.addEventListener('input', function () {
       clearTimeout(debounce);

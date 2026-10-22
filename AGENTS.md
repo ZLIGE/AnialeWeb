@@ -38,3 +38,4 @@ pnpm preview    # 预览构建结果
 10. **giscus 评论前置条件**：仓库公开 + 已开 Discussions + 安装 giscus App，缺一评论区就报 "giscus is not installed"。`repoId`/`categoryId` 换仓库后要到 giscus.app 重新生成；加密文章（`password`）页面侧跳过评论。
 11. **外观设置存 localStorage、BaseLayout 头部脚本首帧前恢复**（无闪烁）：`palette`（色相）、`hero-mode`、`hero-title`、`hero-ripple`、`home-layout`、`theme`（明暗，`<html data-theme>`）。同步入口是 `<html>` 的 data 属性 + `site:settings` 事件，新增设置项照此模式接。
 12. **文章导航语义**：「上一篇」= 列表中更新一篇（更上方），「下一篇」= 更早一篇（更下方），与首页列表顺序一致（[id].astro 中 `newer`/`older` 的取名即此含义，勿再对调）。
+13. **`transition:persist` 弹窗跨页存活**：SearchModal 等持久化弹窗在视图过渡换页后会原样带到新页面——点击结果跳转类交互必须在导航前主动 `close()`，并挂 `astro:after-swap` 兜底关闭，否则换页实际发生了但弹窗盖在新页上，看起来像「点了没反应」（用户曾因此以为搜索跳转失效）。
