@@ -123,18 +123,53 @@
     // 状态条（正在加载/正在休息）是独立 fixed 元素，库创建时按停靠方向
     // 固定在屏幕边缘；模型被拖走后它必须贴到模型所在的那一侧，否则会
     // 出现在屏幕对侧（远离开板娘）
-    const syncStatusSide = () => {
-      const host = document.getElementById('l2d-host');
-      if (!host) return;
-      const bar = [...host.children].find(
-        (el) => !el.contains(canvas) && el !== canvas,
-      );
-      if (!bar) return;
-      const rect = stage.getBoundingClientRect();
-      const nearLeft = rect.left + rect.width / 2 < window.innerWidth / 2;
-      bar.style.left = nearLeft ? '0px' : '';
-      bar.style.right = nearLeft ? '' : '0px';
+    const host = document.getElementById('l2d-host');
+    // 库用 transform: translateX(100%) 把状态条向右滑出屏幕来隐藏——该方向
+    // 只对右锚定有效；左锚定时需镜像为向左滑出，否则状态条常驻屏幕内。
+    // 用 MutationObserver 跟踪库写入的 transform 实时镜像。
+    let statusNearLeft = false;
+    const mirrorStatusTransform = () => {
+      if (!statusBar) return;
+      const tf = statusBar.style.transform;
+      if (statusNearLeft && tf.includes('translateX(100%)')) {
+        // 左锚定：向右滑出会留在屏幕内，镜像为向左滑出
+        statusBar.style.transform = tf.replace(
+          'translateX(100%)',
+          'translateX(-100%)',
+        );
+        statusBar.style.borderRadius = '0 8px 8px 0';
+      } else if (!statusNearLeft && tf.includes('translateX(-100%)')) {
+        // 右锚定：换回库默认的向右滑出
+        statusBar.style.transform = tf.replace(
+          'translateX(-100%)',
+          'translateX(100%)',
+        );
+        statusBar.style.borderRadius = '';
+      }
     };
+    let statusBar: HTMLElement | null = null;
+    const syncStatusSide = () => {
+      if (!host || !statusBar) return;
+      const rect = stage.getBoundingClientRect();
+      statusNearLeft = rect.left + rect.width / 2 < window.innerWidth / 2;
+      statusBar.style.left = statusNearLeft ? '0px' : '';
+      statusBar.style.right = statusNearLeft ? '' : '0px';
+      statusBar.style.borderRadius = statusNearLeft
+        ? '0 8px 8px 0'
+        : '';
+      mirrorStatusTransform();
+    };
+    if (host) {
+      statusBar = ([...host.children].find(
+        (el) => !el.contains(canvas) && el !== canvas,
+      ) as HTMLElement) ?? null;
+      if (statusBar) {
+        new MutationObserver(mirrorStatusTransform).observe(statusBar, {
+          attributes: true,
+          attributeFilter: ['style'],
+        });
+      }
+    }
     if (readSaved()) syncStatusSide();
 
     let pressing = false;
