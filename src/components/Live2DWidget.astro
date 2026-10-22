@@ -120,6 +120,23 @@
     // 恢复上次记忆的位置
     restore();
 
+    // 状态条（正在加载/正在休息）是独立 fixed 元素，库创建时按停靠方向
+    // 固定在屏幕边缘；模型被拖走后它必须贴到模型所在的那一侧，否则会
+    // 出现在屏幕对侧（远离开板娘）
+    const syncStatusSide = () => {
+      const host = document.getElementById('l2d-host');
+      if (!host) return;
+      const bar = [...host.children].find(
+        (el) => !el.contains(canvas) && el !== canvas,
+      );
+      if (!bar) return;
+      const rect = stage.getBoundingClientRect();
+      const nearLeft = rect.left + rect.width / 2 < window.innerWidth / 2;
+      bar.style.left = nearLeft ? '0px' : '';
+      bar.style.right = nearLeft ? '' : '0px';
+    };
+    if (readSaved()) syncStatusSide();
+
     let pressing = false;
     let dragMode = false;
     let pointerId = -1;
@@ -202,6 +219,7 @@
           parseFloat(stage.style.left) || 0,
           parseFloat(stage.style.top) || 0
         );
+        syncStatusSide();
       },
       true
     );
