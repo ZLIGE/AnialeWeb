@@ -144,6 +144,13 @@ passwordHint: 提示文案（可选，展示在解锁卡片上）
    - **Vercel / Netlify**：导入仓库即可，自动识别 Astro
    - **GitHub Pages**：参考官方 [guide](https://docs.astro.build/en/guides/deploy/github/)
 
+## 🤖 AI 协作
+
+想让 AI 编码助手（Claude、DeepSeek、Cursor 等）参与开发？项目根目录的
+**[AGENTS.md](AGENTS.md)** 是写给它们的协作手册：架构速览、常见改动的标准路径、
+红线清单与历史坑位、改完必做的验证清单。主流 AI 编码工具会自动读取该文件，
+无需额外配置。
+
 ## 📄 许可
 
 站点代码 MIT。示例模型与第三方模型资源版权归其作者所有，仅供学习交流。
