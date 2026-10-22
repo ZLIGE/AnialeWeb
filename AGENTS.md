@@ -33,7 +33,7 @@ pnpm preview    # 预览构建结果
 5. **域名警示**：`model.oml2d.com` 与 `oml2d.com` 已于 2026-09 易主为垃圾站，禁止作为模型源/外链；Live2D 模型与外链资源一律优先 `fastly.jsdelivr.net` 镜像（当前模型：pixi-live2d-display 仓库的 shizuku 测试模型）。
 6. **樱花特效必须按时间增量（dt）驱动**：用户屏幕为 241Hz 高刷新率，按帧步进会 4 倍速且左右摆动变成高频抖动（Sakura.astro）。
 7. Live2D 模型如需自制：psd2live（github.com/tsunehimatoi/psd2live）是 Java 桌面工具，输入须为分层 PSD，输出 `.moc3` 后接入 `'live2d'` 形态；它不能处理单张扁平图。
-8. **色相滑条禁止在拖动期间回写自身值**：Chromium 收到程序化 `value` 赋值会终止原生拖拽（表现为「滑块抓不住」）。PaletteSwitcher 用 `activeSlider`（pointerdown → pointerup 窗口期）跳过 `applyHue`/`paintAll` 对该滑条的回写，改动时不要删掉这个守卫。
+8. **色相滑条必须 JS 驱动拖拽**：两重原因。①Chromium 在原生拖拽中收到程序化 `value` 赋值会终止手势——PaletteSwitcher 用 `activeSlider`（pointerdown → pointerup 窗口期）跳过 `applyHue`/`paintAll` 对该滑条的回写；②**ZCode 内嵌浏览器（IAB WebView）的原生 range 拖拽管线失效**——实测 pointerdown 捕获成功、buttons=1 的 move 全部到达滑条、无任何 preventDefault，但值始终不更新（裸滑条对照实验同样失败），用户真实鼠标也复现。因此滑条在 pointerdown 时手动 `setPointerCapture` 并按指针坐标换算色相（pointermove 中 `e.buttons & 1` 判定按住），正常浏览器原生拖拽照常、两者按同一指针位置计算结果一致。滑条 CSS 已加 `touch-action: none`（触屏同理）。改动时不要退回依赖原生拖拽。
 9. **壁纸层与横幅标题层必须指针穿透**：`HeroBackdrop` 与 `[data-hero-caption]` 整层 `pointer-events: none`（全屏/覆盖模式下它们盖住导航栏下拉面板，否则调色板滑条/按钮点不到）；标题层内的 `a`/`button` 单独恢复 `auto`。
 10. **giscus 评论前置条件**：仓库公开 + 已开 Discussions + 安装 giscus App，缺一评论区就报 "giscus is not installed"。`repoId`/`categoryId` 换仓库后要到 giscus.app 重新生成；加密文章（`password`）页面侧跳过评论。
 11. **外观设置存 localStorage、BaseLayout 头部脚本首帧前恢复**（无闪烁）：`palette`（色相）、`hero-mode`、`hero-title`、`hero-ripple`、`home-layout`、`theme`（明暗，`<html data-theme>`）。同步入口是 `<html>` 的 data 属性 + `site:settings` 事件，新增设置项照此模式接。

@@ -229,6 +229,8 @@ const { direction = 'up' } = Astro.props;
     border-radius: 9999px;
     outline: none;
     cursor: pointer;
+    /* JS 驱动拖拽：触屏按下后由本组件接管，不让浏览器把滑动变成页面滚动 */
+    touch-action: none;
     background: linear-gradient(
       90deg,
       oklch(0.72 0.17 0),
@@ -537,8 +539,31 @@ const { direction = 'up' } = Astro.props;
       // 记录正在拖动的滑条（拖动期间不回写其值，见 activeSlider 说明）
       var hueSlider = rootEl.querySelector('.hue-slider');
       if (hueSlider) {
-        hueSlider.addEventListener('pointerdown', function () {
+        // JS 驱动拖拽：部分内嵌浏览器（WebView）的原生 range 拖拽管线失效
+        // （按下捕获成功、move 也到达滑条，但值不更新），故按指针坐标自行换算。
+        // 正常浏览器里原生拖拽照常工作，两者按同一指针位置计算，结果一致不冲突。
+        var applyPointerHue = function (e) {
+          var rect = hueSlider.getBoundingClientRect();
+          // 减去滑块半宽：有效行程 = 轨道宽 - 滑块宽（与原生行为一致）
+          var span = rect.width - 16;
+          var pct = span > 0 ? (e.clientX - rect.left - 8) / span : 0;
+          pct = pct < 0 ? 0 : pct > 1 ? 1 : pct;
+          var hue = Math.round(pct * 359) % 360;
+          hueSlider.value = String(hue);
+          applyHue(hue, true);
+          paintAll();
+        };
+        hueSlider.addEventListener('pointerdown', function (e) {
           activeSlider = hueSlider;
+          try {
+            hueSlider.setPointerCapture(e.pointerId);
+          } catch (err) {
+            /* 合成事件或指针已释放时忽略 */
+          }
+          applyPointerHue(e);
+        });
+        hueSlider.addEventListener('pointermove', function (e) {
+          if (e.buttons & 1) applyPointerHue(e);
         });
       }
 
