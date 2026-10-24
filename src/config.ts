@@ -30,16 +30,16 @@ export const siteConfig = {
 
   /**
    * 首页顶部 Hero 大图轮播：每次打开网站随机从其中一张开始，
-   * 之后自动轮播。图片放在 public/images/hero/（1920 宽 WebP），
+   * 之后自动轮播。图片放在 public/images/hero/（1920 宽），
    * 增删数组元素即可调整轮播池。
    */
   hero: {
     images: [
-      '/images/hero/hero-01.webp',
-      '/images/hero/hero-02.webp',
-      '/images/hero/hero-03.webp',
-      '/images/hero/hero-04.webp',
-      '/images/hero/hero-05.webp',
+      '/images/hero/hero-01.jpg',
+      '/images/hero/hero-02.png',
+      '/images/hero/hero-03.png',
+      '/images/hero/hero-04.jpg',
+      '/images/hero/hero-05.jpg',
     ],
     /** 轮播间隔（毫秒） */
     interval: 6000,
