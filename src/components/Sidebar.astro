@@ -24,16 +24,22 @@ const cats = getAllCategories(posts).slice(0, 6);
 <aside
   class="sticky top-20 hidden w-60 shrink-0 flex-col gap-5 self-start lg:flex 2xl:w-64"
 >
-  <!-- 个人资料卡（Shirone 风格：头像大图置顶 + 居中信息） -->
+  <!-- 个人资料卡（居中圆形头像 + 渐变圆环框 + 居中信息） -->
   <section class="card overflow-hidden">
-    <img
-      src={avatar}
-      alt={`${author} 的头像`}
-      class="aspect-square w-full object-cover"
-      width="288"
-      height="288"
-    />
-    <div class="flex flex-col items-center px-5 pb-5 pt-4">
+    <div class="flex justify-center px-6 pt-6">
+      <div class="avatar-ring rounded-full p-[5px]">
+        <div class="rounded-full bg-card p-[4px]">
+          <img
+            src={avatar}
+            alt={`${author} 的头像`}
+            class="size-36 rounded-full object-cover"
+            width="144"
+            height="144"
+          />
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-col items-center px-5 pb-5 pt-3">
       <h2 class="text-lg font-bold">{author}</h2>
       <span class="my-2.5 h-[3px] w-9 rounded-full bg-primary/50"></span>
       <p class="text-center text-sm leading-relaxed text-muted">{subtitle}</p>
@@ -105,3 +111,11 @@ const cats = getAllCategories(posts).slice(0, 6);
     </div>
   </section>
 </aside>
+
+<style>
+  /* 头像渐变圆环框：主题色 → 点缀色（跟随调色板换色），环内留卡片色间隙 */
+  .avatar-ring {
+    background: linear-gradient(135deg, var(--pr), var(--accent));
+    box-shadow: var(--shadow-card);
+  }
+</style>
