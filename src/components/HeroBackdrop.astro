@@ -85,30 +85,11 @@ const images = hero.images;
   .hero-backdrop :where(img, div, svg, path) {
     pointer-events: none;
   }
-  /* 当前展示壁纸缓慢放大（Ken Burns，参考 witchcat.cn）：
-     所有壁纸挂同一动画但默认暂停——切走的壁纸冻结在当前缩放进度
-     （1400ms 淡出期间不会突然缩回原尺寸跳变），切入的由 Hero.astro
-     的 show() 重挂 .hero-zoom 类从头播放 */
+  /* 壁纸 Ken Burns 缓慢放大由 Hero.astro 用 WAAPI 驱动（见其 startZoom）：
+     WAAPI 动画对象挂在元素上，transition:persist 跨页搬移后可重绑时间线
+     恢复进度（CSS 动画换页重启会让壁纸闪回原尺寸）；此处仅保留合成提示 */
   .hero-backdrop img[data-hero-img] {
-    animation: hero-kenburns 14s ease-in-out forwards;
-    animation-play-state: paused;
     will-change: transform;
-  }
-  .hero-backdrop img[data-hero-img].hero-zoom {
-    animation-play-state: running;
-  }
-  @keyframes hero-kenburns {
-    from {
-      transform: scale(1);
-    }
-    to {
-      transform: scale(1.08);
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .hero-backdrop img[data-hero-img] {
-      animation: none;
-    }
   }
   /* 面板「水波纹动画」关闭时彻底去除波浪层 */
   :global([data-hero-ripple='off']) .hero-waves {

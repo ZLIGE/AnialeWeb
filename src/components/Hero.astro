@@ -106,20 +106,72 @@ const taglines = siteConfig.hero.taglines ?? [];
     var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     var timer = 0;
 
+    // ── 壁纸 Ken Burns 缓慢放大（WAAPI 驱动，参考 witchcat.cn） ──
+    // 动画对象挂在元素上：壁纸层是 transition:persist 持久元素，跨页搬移后
+    // 动画时间线挂在旧文档上会冻结——重新绑定到当前文档并恢复局部时间，
+    // 缩放进度连续不闪回；只有真正切换到另一张壁纸时才从 scale(1) 重新放大
+    var ZOOM_MS = 14000;
+    function zoomAnims(img) {
+      var out = [];
+      img.getAnimations().forEach(function (a) {
+        if (a.id === 'hero-kenburns') out.push(a);
+      });
+      return out;
+    }
+    function restartZoom(img) {
+      zoomAnims(img).forEach(function (a) {
+        a.cancel();
+      });
+      img.animate(
+        [{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }],
+        {
+          duration: ZOOM_MS,
+          easing: 'ease-in-out',
+          fill: 'forwards',
+          id: 'hero-kenburns',
+        }
+      );
+    }
+    function resumeZoom(img) {
+      var anims = zoomAnims(img);
+      if (anims.length === 0) {
+        restartZoom(img);
+        return;
+      }
+      for (var i = 0; i < anims.length; i++) {
+        var a = anims[i];
+        var t = a.currentTime;
+        try {
+          a.timeline = document.timeline;
+          if (t !== null) a.currentTime = t;
+          if (t !== null && t >= ZOOM_MS) a.currentTime = 0; // 已放满：从头再来
+          a.play();
+        } catch (e) {
+          restartZoom(img);
+          return;
+        }
+      }
+    }
+    function pauseZoom(img) {
+      zoomAnims(img).forEach(function (a) {
+        a.pause();
+      });
+    }
+
     function show(n) {
       current = (n + imgs.length) % imgs.length;
+      var stored = parseInt(sessionStorage.getItem('hero-img'), 10);
+      var sameImage = stored === current; // 跨页回到同一张：缩放进度连续恢复
+      var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
       imgs.forEach(function (img, i) {
         img.style.opacity = i === current ? '1' : '0';
-        if (i === current) {
-          // 重挂缩放动画类：从 scale(1) 重新开始缓慢放大（Ken Burns）
-          img.classList.remove('hero-zoom');
-          void img.offsetWidth;
-          img.classList.add('hero-zoom');
-        } else {
-          // 移除后动画回到暂停态，冻结在当前缩放进度（淡出期间不跳变）
-          img.classList.remove('hero-zoom');
-        }
+        if (i !== current) pauseZoom(img); // 非当前壁纸冻结进度，淡出期间不跳变
       });
+      if (!reduce) {
+        var active = imgs[current];
+        if (sameImage) resumeZoom(active);
+        else restartZoom(active);
+      }
       try {
         sessionStorage.setItem('hero-img', String(current));
       } catch (e) {}
