@@ -1,0 +1,91 @@
+# Pages CMS 配置（https://pagescms.org）
+# 用 GitHub 账号登录 app.pagescms.org 选择本仓库即可在网页/手机端管理内容；
+# 保存即产生 commit。字段与 src/content.config.ts 的 zod 校验一一对应。
+
+media:
+  - name: images
+    label: 站点图片
+    input: public/images
+    output: /images
+
+content:
+  # ── 博客文章 ──────────────────────────────────────────────
+  - name: posts
+    label: 文章
+    path: src/content/posts
+    type: collection
+    view:
+      fields: [title, published, category]
+      primary: title
+      sort:
+        by: published
+        direction: descending
+    fields:
+      - { name: title, label: 标题, type: string }
+      - { name: published, label: 发布日期, type: date }
+      - { name: updated, label: 更新日期, type: date, required: false }
+      - { name: description, label: 摘要, type: text }
+      - { name: image, label: 封面图, type: image, required: false }
+      - { name: category, label: 分类, type: string }
+      - { name: tags, label: 标签, type: string, list: true }
+      - { name: pinned, label: 置顶, type: boolean, default: false }
+      - { name: draft, label: 草稿, type: boolean, default: false }
+      - { name: password, label: 加密密码, type: string, required: false }
+      - { name: passwordHint, label: 密码提示, type: string, required: false }
+      - { name: body, label: 正文, type: rich-text }
+
+  # ── 追番录（src/data/anime.yaml） ────────────────────────
+  - name: anime
+    label: 追番录
+    path: src/data/anime.yaml
+    type: file
+    fields:
+      - name: items
+        label: 番剧列表
+        type: object
+        list: true
+        fields:
+          - { name: order, label: 排序, type: number }
+          - { name: title, label: 标题, type: string }
+          - { name: year, label: 播出季度, type: string }
+          - { name: progress, label: 观看进度, type: string }
+          - { name: rating, label: 评分, type: number }
+          - { name: comment, label: 一句话感想, type: text }
+          - { name: link, label: 相关链接, type: string, required: false }
+          - { name: emoji, label: 封面emoji, type: string, required: false }
+
+  # ── 作品集（src/data/projects.yaml） ─────────────────────
+  - name: projects
+    label: 作品集
+    path: src/data/projects.yaml
+    type: file
+    fields:
+      - name: items
+        label: 作品列表
+        type: object
+        list: true
+        fields:
+          - { name: order, label: 排序, type: number }
+          - { name: name, label: 名称, type: string }
+          - { name: icon, label: 图标emoji, type: string }
+          - { name: description, label: 描述, type: text }
+          - { name: tags, label: 技术标签, type: string, list: true }
+          - { name: link, label: 在线地址, type: string, required: false }
+          - { name: repo, label: 仓库地址, type: string, required: false }
+
+  # ── 友情链接（src/data/friends.yaml） ────────────────────
+  - name: friends
+    label: 友情链接
+    path: src/data/friends.yaml
+    type: file
+    fields:
+      - name: items
+        label: 友链列表
+        type: object
+        list: true
+        fields:
+          - { name: order, label: 排序, type: number }
+          - { name: name, label: 站点名称, type: string }
+          - { name: link, label: 站点地址, type: string }
+          - { name: avatar, label: 头像图片, type: image, required: false }
+          - { name: description, label: 一句话简介, type: text }

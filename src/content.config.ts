@@ -27,4 +27,66 @@ const posts = defineCollection({
   }),
 });
 
-export const collections = { posts };
+/**
+ * 板块数据集合（src/data/*.yaml）：单文件单条目，data.items 为列表。
+ * YAML 可在 PagesCMS 后台直接编辑，order 字段决定显示顺序。
+ */
+const anime = defineCollection({
+  loader: glob({ pattern: 'anime.yaml', base: './src/data' }),
+  schema: z.object({
+    items: z.array(
+      z.object({
+        order: z.number(),
+        title: z.string(),
+        /** 播出季度，如 2026 夏 */
+        year: z.string(),
+        /** 观看进度 */
+        progress: z.string(),
+        /** 评分 1~5 */
+        rating: z.number().min(1).max(5),
+        /** 一句话感想 */
+        comment: z.string(),
+        /** 相关链接（如 Bangumi 条目） */
+        link: z.string().optional(),
+        /** 封面占位 emoji */
+        emoji: z.string().optional(),
+      }),
+    ),
+  }),
+});
+
+const projects = defineCollection({
+  loader: glob({ pattern: 'projects.yaml', base: './src/data' }),
+  schema: z.object({
+    items: z.array(
+      z.object({
+        order: z.number(),
+        name: z.string(),
+        /** 卡片图标 emoji */
+        icon: z.string(),
+        description: z.string(),
+        tags: z.array(z.string()).default([]),
+        link: z.string().optional(),
+        repo: z.string().optional(),
+      }),
+    ),
+  }),
+});
+
+const friends = defineCollection({
+  loader: glob({ pattern: 'friends.yaml', base: './src/data' }),
+  schema: z.object({
+    items: z.array(
+      z.object({
+        order: z.number(),
+        name: z.string(),
+        /** 头像图片地址（不填显示首字母占位头像） */
+        avatar: z.string().optional(),
+        link: z.string(),
+        description: z.string(),
+      }),
+    ),
+  }),
+});
+
+export const collections = { posts, anime, projects, friends };

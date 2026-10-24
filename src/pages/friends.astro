@@ -2,8 +2,12 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageBanner from '../components/PageBanner.astro';
 import Icon from '../components/Icon.astro';
-import { friends } from '../data/friends';
+import { getCollection } from 'astro:content';
 import { siteConfig } from '../config';
+
+// 数据来自 src/data/friends.yaml（PagesCMS 后台可编辑），按 order 排序
+const friendsEntry = (await getCollection('friends'))[0];
+const friends = (friendsEntry?.data.items ?? []).slice().sort((a, b) => a.order - b.order);
 
 /** 友链占位头像：取名字首字符 + 渐变底 */
 const initialOf = (name: string) => [...name][0] ?? '❀';

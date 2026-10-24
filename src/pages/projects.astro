@@ -2,7 +2,11 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageBanner from '../components/PageBanner.astro';
 import Icon from '../components/Icon.astro';
-import { projects } from '../data/projects';
+import { getCollection } from 'astro:content';
+
+// 数据来自 src/data/projects.yaml（PagesCMS 后台可编辑），按 order 排序
+const projectsEntry = (await getCollection('projects'))[0];
+const projects = (projectsEntry?.data.items ?? []).slice().sort((a, b) => a.order - b.order);
 ---
 
 <BaseLayout title="作品集" description="我做过的一些项目与作品" hero>
