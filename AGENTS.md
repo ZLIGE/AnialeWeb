@@ -58,7 +58,7 @@ pnpm preview    # 预览构建结果
 1. **pnpm 12 构建脚本审批**在 `pnpm-workspace.yaml` 的 `allowBuilds`（package.json 的 `pnpm.onlyBuiltDependencies` 不生效）。
 2. **Astro 7 空白规则**：模板中内联元素之间的换行不再渲染空格，跨行拼接文字必须显式 `{' '}`。
 3. **内容集合中文参数**：`getStaticPaths` 的 params 用原始中文（如 `公告`），不要预 `encodeURIComponent`；链接处再用 `tagSlug()` 编码。
-4. **看板娘双形态**（`effects.companion`）：`'elaina'` 单图活立绘（ElainaWidget.astro，直接拖拽 + localStorage `elaina-drag-pos`）；`'live2d'` l2d-widget 模型（Live2DWidget.astro，直接拖拽 + localStorage `l2d-widget-drag-pos`）。均为「按下移动超 8px 即拖拽、轻点仍是互动」阈值设计（非长按）。**拖拽定位目标是 stage 容器**（canvas 是 `position: static`，真正 fixed 的是其父元素）。**状态条（正在加载/正在休息）是 host 下独立 fixed 元素**，须随模型同步贴同一侧屏幕边缘；库用 `transform: translateX(100%)` 向右滑出隐藏——左锚定时必须 MutationObserver 镜像为 `translateX(-100%)`，否则状态条常驻屏幕内。
+4. **看板娘双形态**（`effects.companion`）：`'elaina'` 单图活立绘（ElainaWidget.astro，直接拖拽 + localStorage `elaina-drag-pos`）；`'live2d'` l2d-widget 模型（Live2DWidget.astro，直接拖拽 + localStorage `l2d-widget-drag-pos`）。均为「按下移动超 8px 即拖拽、轻点仍是互动」阈值设计（非长按）。**拖拽定位目标是 stage 容器**（canvas 是 `position: static`，真正 fixed 的是其父元素）。**位置记忆为距右/下边缘距离（{fromRight,fromBottom}）**——绝对坐标跨窗口尺寸会落到错误位置；读到旧格式 {left,top} 时一次性清除重置回默认右下角。**状态条（正在加载/正在休息）是 host 下独立 fixed 元素**，须随模型同步贴同一侧屏幕边缘；库用 `transform: translateX(100%)` 向右滑出隐藏——左锚定时必须 MutationObserver 镜像为 `translateX(-100%)`，否则状态条常驻屏幕内。库的入场动画对 stage 做 `translateY(520px)→0` 过渡：后台标签页 rAF 暂停会让过渡冻结在中间帧（rect 偏移 520px 属测试假象，前台正常滑入）。
 5. **域名警示**：`model.oml2d.com` 与 `oml2d.com` 已于 2026-09 易主为垃圾站，禁止作为模型源/外链；Live2D 模型与外链资源一律优先 `fastly.jsdelivr.net` 镜像（当前模型：pixi-live2d-display 仓库的 shizuku 测试模型）。
 6. **樱花特效必须按时间增量（dt）驱动**：用户屏幕为 241Hz 高刷新率，按帧步进会 4 倍速且摆动变高频抖动（Sakura.astro）。
 7. Live2D 模型如需自制：psd2live（github.com/tsunehimatoi/psd2live）是 Java 桌面工具，输入须为分层 PSD，输出 `.moc3` 后接入 `'live2d'` 形态；它不能处理单张扁平图。

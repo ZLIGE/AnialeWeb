@@ -144,19 +144,31 @@
   ];
 
   // ── 位置记忆恢复 ──────────────────────────────────────────
+  // 以「距右/下边缘的距离」记忆：跨窗口尺寸稳定贴同一视觉角落；
+  // 旧版 {left,top} 绝对坐标格式读到即清除（重置回默认停靠位）
   let userMoved = false;
   try {
     const raw = localStorage.getItem(POS_KEY);
     if (raw) {
       const p = JSON.parse(raw);
-      const left = clamp(Number(p.left), 0, window.innerWidth - widget.offsetWidth);
-      const top = clamp(Number(p.top), 0, window.innerHeight - widget.offsetHeight);
-      if (Number.isFinite(left) && Number.isFinite(top)) {
+      if (Number.isFinite(p?.fromRight) && Number.isFinite(p?.fromBottom)) {
+        const left = clamp(
+          window.innerWidth - p.fromRight - widget.offsetWidth,
+          0,
+          Math.max(0, window.innerWidth - widget.offsetWidth),
+        );
+        const top = clamp(
+          window.innerHeight - p.fromBottom - widget.offsetHeight,
+          0,
+          Math.max(0, window.innerHeight - widget.offsetHeight),
+        );
         widget.style.left = `${left}px`;
         widget.style.top = `${top}px`;
         widget.style.right = 'auto';
         widget.style.bottom = 'auto';
         userMoved = true;
+      } else {
+        localStorage.removeItem(POS_KEY);
       }
     }
   } catch {
@@ -275,12 +287,20 @@
         e.stopPropagation();
         userMoved = true;
         try {
+          const left = parseFloat(widget.style.left) || 0;
+          const top = parseFloat(widget.style.top) || 0;
           localStorage.setItem(
             POS_KEY,
             JSON.stringify({
-              left: parseFloat(widget.style.left) || 0,
-              top: parseFloat(widget.style.top) || 0,
-            })
+              fromRight: Math.max(
+                0,
+                window.innerWidth - left - widget.offsetWidth,
+              ),
+              fromBottom: Math.max(
+                0,
+                window.innerHeight - top - widget.offsetHeight,
+              ),
+            }),
           );
         } catch {
           /* 隐私模式下忽略 */

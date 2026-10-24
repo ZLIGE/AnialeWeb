@@ -38,20 +38,29 @@
   const clamp = (v: number, min: number, max: number) =>
     Math.min(Math.max(v, min), max);
 
-  const readSaved = (): { left: number; top: number } | null => {
+  // 位置以「距右/下边缘的距离」记忆：跨窗口尺寸/换屏后仍稳定贴在同一视觉角落；
+  // 旧版 {left,top} 绝对坐标格式无法还原原视口尺寸，读到即清除（重置回默认右下角）
+  const readSaved = (): { fromRight: number; fromBottom: number } | null => {
     try {
       const raw = localStorage.getItem(POS_KEY);
       if (!raw) return null;
       const p = JSON.parse(raw);
-      return Number.isFinite(p?.left) && Number.isFinite(p?.top) ? p : null;
+      if (Number.isFinite(p?.fromRight) && Number.isFinite(p?.fromBottom)) {
+        return { fromRight: p.fromRight, fromBottom: p.fromBottom };
+      }
+      localStorage.removeItem(POS_KEY);
+      return null;
     } catch {
       return null;
     }
   };
 
-  const save = (left: number, top: number) => {
+  const save = (fromRight: number, fromBottom: number) => {
     try {
-      localStorage.setItem(POS_KEY, JSON.stringify({ left, top }));
+      localStorage.setItem(
+        POS_KEY,
+        JSON.stringify({ fromRight, fromBottom }),
+      );
     } catch {
       /* 隐私模式下忽略 */
     }
@@ -103,16 +112,19 @@
     const restore = () => {
       const saved = readSaved();
       if (!saved) return;
-      stage.style.left = `${clamp(
-        saved.left,
+      // 由「距右/下边缘距离」换算回 left/top，并夹回可视区内
+      const left = clamp(
+        window.innerWidth - saved.fromRight - stage.offsetWidth,
         0,
-        window.innerWidth - stage.offsetWidth
-      )}px`;
-      stage.style.top = `${clamp(
-        saved.top,
+        Math.max(0, window.innerWidth - stage.offsetWidth),
+      );
+      const top = clamp(
+        window.innerHeight - saved.fromBottom - stage.offsetHeight,
         0,
-        window.innerHeight - stage.offsetHeight
-      )}px`;
+        Math.max(0, window.innerHeight - stage.offsetHeight),
+      );
+      stage.style.left = `${left}px`;
+      stage.style.top = `${top}px`;
       stage.style.right = 'auto';
       stage.style.bottom = 'auto';
     };
@@ -250,9 +262,11 @@
         // 拦截拖动结束事件，避免模型把这次按压当成触摸互动
         e.preventDefault();
         e.stopPropagation();
+        const left = parseFloat(stage.style.left) || 0;
+        const top = parseFloat(stage.style.top) || 0;
         save(
-          parseFloat(stage.style.left) || 0,
-          parseFloat(stage.style.top) || 0
+          Math.max(0, window.innerWidth - left - stage.offsetWidth),
+          Math.max(0, window.innerHeight - top - stage.offsetHeight),
         );
         syncStatusSide();
       },
