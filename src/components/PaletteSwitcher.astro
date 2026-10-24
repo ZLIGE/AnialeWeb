@@ -410,8 +410,8 @@ const { direction = 'up' } = Astro.props;
     // ── 各设置的当前值 ─────────────────────────────────────
     var DEFAULT_HUE = 295; // 梦幻紫默认色相
     function getMode() {
-      var v = lsGet('hero-mode', 'banner');
-      return ['banner', 'full', 'cover', 'hidden'].indexOf(v) >= 0 ? v : 'banner';
+      var v = lsGet('hero-mode', 'full');
+      return ['banner', 'full', 'cover', 'hidden'].indexOf(v) >= 0 ? v : 'full';
     }
     function getToggle(key) {
       return lsGet(key, 'on') === 'off' ? 'off' : 'on';
@@ -452,7 +452,7 @@ const { direction = 'up' } = Astro.props;
           btn.hidden = hue === DEFAULT_HUE;
         });
         pop.querySelectorAll('[data-reset="mode"]').forEach(function (btn) {
-          btn.hidden = mode === 'banner';
+          btn.hidden = mode === 'full';
         });
         pop.querySelectorAll('[data-reset="options"]').forEach(function (btn) {
           btn.hidden =
@@ -517,7 +517,7 @@ const { direction = 'up' } = Astro.props;
           if (resetBtn.dataset.reset === 'hue') {
             applyHue(DEFAULT_HUE, true);
           } else if (resetBtn.dataset.reset === 'mode') {
-            lsSet('hero-mode', 'banner');
+            lsSet('hero-mode', 'full');
             applyAttrs();
           } else if (resetBtn.dataset.reset === 'options') {
             lsSet('hero-title', 'on');

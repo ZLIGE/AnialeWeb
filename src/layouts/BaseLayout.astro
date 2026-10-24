@@ -106,7 +106,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         // 外观面板的运行时设置（壁纸模式 / 横幅选项 / 首页布局）
         const applySettings = () => {
           const doc = document.documentElement;
-          doc.setAttribute('data-hero-mode', get('hero-mode', 'banner'));
+          doc.setAttribute('data-hero-mode', get('hero-mode', 'full'));
           doc.setAttribute('data-hero-title', get('hero-title', 'on'));
           doc.setAttribute('data-hero-ripple', get('hero-ripple', 'on'));
           doc.setAttribute('data-home-layout', get('home-layout', 'list'));
