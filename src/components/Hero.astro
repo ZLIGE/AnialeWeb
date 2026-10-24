@@ -110,6 +110,15 @@ const taglines = siteConfig.hero.taglines ?? [];
       current = (n + imgs.length) % imgs.length;
       imgs.forEach(function (img, i) {
         img.style.opacity = i === current ? '1' : '0';
+        if (i === current) {
+          // 重挂缩放动画类：从 scale(1) 重新开始缓慢放大（Ken Burns）
+          img.classList.remove('hero-zoom');
+          void img.offsetWidth;
+          img.classList.add('hero-zoom');
+        } else {
+          // 移除后动画回到暂停态，冻结在当前缩放进度（淡出期间不跳变）
+          img.classList.remove('hero-zoom');
+        }
       });
       try {
         sessionStorage.setItem('hero-img', String(current));
