@@ -34,6 +34,7 @@ pnpm preview    # 预览构建结果
 | `src/components/SearchModal.astro` | 全文搜索弹窗（懒加载 /search-index.json，持久化弹窗） |
 | `src/components/HeroBackdrop.astro` | 跨页持久壁纸层（`transition:persist="hero-backdrop"`，壁纸不闪烁的关键） |
 | `src/components/Live2DWidget.astro` / `ElainaWidget.astro` | 看板娘两形态（直接拖拽 + 位置记忆） |
+| `src/pages/rss.xml.ts` + `public/rss.xsl` | RSS 全文输出（加密文只出摘要）+ 浏览器美化订阅页；XSL 读取站点 localStorage 的 palette/theme 保持主题一致 |
 | `src/layouts/BaseLayout.astro` | 布局 + 设置恢复脚本 + 右侧信息栏（SiteStats/CalendarCard） |
 | `src/utils/posts.ts` | 文章排序/字数统计/slug 工具 |
 | `src/data/*.ts` | 追番录 / 作品集 / 友链数据 |
