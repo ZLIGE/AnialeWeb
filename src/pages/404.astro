@@ -1,0 +1,50 @@
+---
+/**
+ * 404 页面：访问不存在的路径时由托管平台/Astro 回退到这里。
+ * 保持站点风格：横幅 + 居中卡片给出去处（首页 / 搜索 / 各板块）。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageBanner from '../components/PageBanner.astro';
+
+const shortcuts = [
+  { text: '追番录', href: '/anime' },
+  { text: '作品集', href: '/projects' },
+  { text: '友链', href: '/friends' },
+  { text: '标签', href: '/tags' },
+];
+---
+
+<BaseLayout title="404 · 页面走丢了" description="你要找的页面不存在，回首页或搜一搜吧" hero>
+  <Fragment slot="hero">
+    <PageBanner title="404" sub="（＞﹏＜）页面走丢了…可能被魔女捡走了" />
+  </Fragment>
+  <div class="flex flex-col gap-5">
+    <section class="card flex flex-col items-center gap-5 px-6 py-10 text-center">
+      <p class="text-sm leading-relaxed text-muted">
+        别担心，这里有几条路可以回去：
+      </p>
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <a
+          href="/"
+          class="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-medium text-white transition-all hover:bg-primary-deep"
+        >
+          ✦ 回首页
+        </a>
+        <button
+          class="search-trigger flex items-center gap-2 rounded-xl border border-line px-5 py-2.5 font-medium transition-colors hover:border-primary hover:text-primary"
+        >
+          搜一搜文章
+        </button>
+      </div>
+      <div class="mt-1 flex flex-wrap justify-center gap-2">
+        {
+          shortcuts.map((s) => (
+            <a href={s.href} class="chip">
+              {s.text}
+            </a>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</BaseLayout>
