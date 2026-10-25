@@ -180,6 +180,63 @@ const images = hero.images;
         });
       });
   }
+  /**
+   * 壁纸可见性兜底初始化：任何页面（含无轮播脚本的板块页）整页加载或
+   * 换页后，保证当前壁纸可见、Ken Burns 缩放连续。
+   * 首页 / 文章页的轮播脚本各自管理切换逻辑，这里只做状态兜底。
+   */
+  function initWallpaper() {
+    const backdrop = document.querySelector('.hero-backdrop');
+    if (!backdrop) return;
+    const imgs = backdrop.querySelectorAll('img[data-hero-img]');
+    if (imgs.length === 0) return;
+
+    let cur = parseInt(sessionStorage.getItem('hero-img') ?? '', 10);
+    if (!(cur >= 0 && cur < imgs.length)) {
+      cur = Math.floor(Math.random() * imgs.length);
+    }
+    imgs.forEach((img, i) => {
+      img.style.opacity = i === cur ? '1' : '0';
+    });
+    try {
+      sessionStorage.setItem('hero-img', String(cur));
+    } catch {
+      /* 隐私模式下忽略 */
+    }
+
+    // Ken Burns 缩放：无动画则启动；跨页搬移后时间线冻结则重绑恢复
+    // （与波浪动画同款处理，保证换页后缩放进度连续不闪回）
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const active = imgs[cur];
+    const anims = active
+      .getAnimations()
+      .filter((a) => a.id === 'hero-kenburns');
+    if (anims.length === 0) {
+      active.animate(
+        [{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }],
+        {
+          duration: 14000,
+          easing: 'ease-in-out',
+          fill: 'forwards',
+          id: 'hero-kenburns',
+        },
+      );
+    } else {
+      for (const a of anims) {
+        const t = a.currentTime;
+        try {
+          a.timeline = document.timeline;
+          if (t !== null) a.currentTime = t;
+          a.play();
+        } catch {
+          a.cancel();
+        }
+      }
+    }
+  }
+  initWallpaper();
+  document.addEventListener('astro:page-load', initWallpaper);
+
   startWaves();
   document.addEventListener('astro:page-load', startWaves);
   document.addEventListener('site:settings', startWaves);
