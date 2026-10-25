@@ -444,13 +444,14 @@ html[data-hero-mode='cover'] #site-navbar.over-hero .navbar-row :where(a, button
 
 /* 文章页壁纸横幅（PostBanner，横幅/全屏模式显示，
    横幅内居中展示文章标题与元信息）：
-   - 覆盖模式：横幅隐藏（文章卡直接浮于页面之上）
-   - 横幅/全屏模式：文章卡自带封面隐藏（横幅已承担视觉） */
+   - 覆盖模式：横幅隐藏（文章卡直接浮于页面之上），封面正常显示
+   - 横幅模式：文章卡自带封面隐藏（横幅已承担视觉）
+   - 全屏模式：封面恢复显示（壁纸已是全屏背景，横幅只承担标题，
+     文章有图时封面应在卡片顶部可见） */
 [data-hero-mode='cover'] .post-hero {
   display: none;
 }
-[data-hero-mode='banner'] .post-cover-img,
-[data-hero-mode='full'] .post-cover-img {
+[data-hero-mode='banner'] .post-cover-img {
   display: none;
 }
 
