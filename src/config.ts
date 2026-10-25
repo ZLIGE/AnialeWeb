@@ -62,6 +62,7 @@ export const siteConfig = {
     { text: '关于我', link: '/about', icon: 'user' },
     { text: '作品集', link: '/projects', icon: 'code' },
     { text: '追番录', link: '/anime', icon: 'tv' },
+    { text: '归档', link: '/archive', icon: 'folder' },
     { text: '友链', link: '/friends', icon: 'users' },
     { text: '标签', link: '/tags', icon: 'tag' },
   ] as NavItem[],
