@@ -19,6 +19,7 @@ import ElainaWidget from '../components/ElainaWidget.astro';
 import Live2DWidget from '../components/Live2DWidget.astro';
 import BackToTop from '../components/BackToTop.astro';
 import SearchModal from '../components/SearchModal.astro';
+import Lightbox from '../components/Lightbox.astro';
 import Announcement from '../components/Announcement.astro';
 import SiteStats from '../components/SiteStats.astro';
 import CalendarCard from '../components/CalendarCard.astro';
@@ -186,6 +187,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <Footer />
     <BackToTop />
     <SearchModal />
+    <Lightbox />
     {siteConfig.effects.sakura && <Sakura />}
     {siteConfig.effects.companion === 'elaina' && <ElainaWidget />}
     {siteConfig.effects.companion === 'live2d' && <Live2DWidget />}

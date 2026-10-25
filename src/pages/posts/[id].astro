@@ -11,6 +11,7 @@ import {
 } from '../../utils/posts';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Icon from '../../components/Icon.astro';
+import { siteConfig } from '../../config';
 import TableOfContents from '../../components/TableOfContents.astro';
 import PostBanner from '../../components/PostBanner.astro';
 import Comment from '../../components/Comment.astro';
@@ -91,6 +92,22 @@ const words = countWords(post.body ?? '');
 ---
 
 <BaseLayout title={title} description={description} hideAside hero>
+  <!-- 结构化数据：搜索引擎富摘要（JSON-LD 可位于 body，Google 会读取） -->
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: title,
+      description: description,
+      datePublished: published,
+      dateModified: updated ?? published,
+      author: { '@type': 'Person', name: siteConfig.author },
+      image: image ? new URL(image, Astro.site).href : undefined,
+      keywords: tags.join(', '),
+      mainEntityOfPage: new URL(`/posts/${post.id}/`, Astro.site).href,
+    })}
+  />
   <Fragment slot="hero">
     <PostBanner
       title={title}

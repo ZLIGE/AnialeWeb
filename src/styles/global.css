@@ -536,3 +536,13 @@ html[data-hero-mode='cover'] #site-navbar.over-hero .navbar-row :where(a, button
     scroll-behavior: auto;
   }
 }
+
+/* ── 搜索弹窗键盘导航高亮（SearchModal） ────────────────────── */
+.search-active {
+  background: color-mix(in oklch, var(--pr) 10%, transparent);
+}
+
+/* ── 文章图片灯箱：可点击放大的视觉暗示 ────────────────────── */
+.prose-anime img {
+  cursor: zoom-in;
+}

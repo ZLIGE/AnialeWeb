@@ -1,9 +1,10 @@
 import rss from '@astrojs/rss';
 import { getCollection, render } from 'astro:content';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
+import type { APIContext } from 'astro';
 import { siteConfig } from '../config';
 
-export async function GET(context) {
+export async function GET(context: APIContext) {
   const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
     (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
   );

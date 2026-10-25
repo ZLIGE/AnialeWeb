@@ -3,6 +3,9 @@
  * 站内搜索弹窗：懒加载 /search-index.json（构建时生成的全文索引），
  * 支持标题 / 标签 / 分类 / 摘要 / 正文的多关键词匹配与结果摘要。
  * 触发：任意 .search-trigger 元素、Ctrl/Cmd + K、或 「/」快捷键；Esc 关闭。
+ * 键盘：↑/↓ 选择结果、Enter 打开（走视图过渡导航）。
+ * 元素为 transition:persist 持久化，脚本为模块脚本（每次整页加载执行一次，
+ * dataset 守卫防重复绑定），监听器跨视图过渡持续生效。
  */
 import { siteConfig } from '../config';
 import Icon from './Icon.astro';
@@ -38,40 +41,50 @@ const { title } = siteConfig;
   </div>
 </div>
 
-<script is:inline>
-  (function () {
-    var modal = document.getElementById('search-modal');
-    var input = document.getElementById('search-input');
-    var results = document.getElementById('search-results');
-    if (!modal || !input || !results) return;
+<script>
+  import { navigate } from 'astro:transitions/client';
 
-    var index = null; // 懒加载缓存
-    var lastQuery = '';
+  const modal = document.getElementById('search-modal');
+  const input = document.getElementById('search-input');
+  const results = document.getElementById('search-results');
+  if (modal && input && results && !modal.dataset.searchBound) {
+    modal.dataset.searchBound = '1';
 
-    function esc(s) {
+    var index: unknown = null; // 懒加载缓存
+    var debounce = 0;
+    var activeIdx = -1; // 键盘导航当前选中项
+
+    function esc(s: string) {
       return String(s).replace(
         /[&<>"']/g,
         (c) =>
-          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c,
       );
     }
 
-    function loadIndex() {
-      if (index) return Promise.resolve(index);
+    function loadIndex(): Promise<SearchItem[]> {
+      if (index) return Promise.resolve(index as SearchItem[]);
       return fetch('/search-index.json')
         .then((r) => r.json())
-        .then((data) => (index = data))
-        .catch(() => {
-          index = [];
-          return [];
-        });
+        .then((data) => ((index = data), data as SearchItem[]))
+        .catch(() => ((index = []), [] as SearchItem[]));
+    }
+
+    interface SearchItem {
+      url: string;
+      title: string;
+      description: string;
+      category: string;
+      tags: string[];
+      text: string;
     }
 
     /** 多关键词 AND 匹配：标题 > 标签 > 分类 > 摘要 > 正文 */
-    function search(items, query) {
+    function search(items: SearchItem[], query: string) {
       var terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-      if (terms.length === 0) return items.map((it) => ({ item: it, snippet: it.description }));
-      var hits = [];
+      if (terms.length === 0)
+        return items.map((it) => ({ item: it, snippet: it.description }));
+      var hits: { item: SearchItem; score: number; snippet: string }[] = [];
       for (var i = 0; i < items.length; i++) {
         var it = items[i];
         var low = {
@@ -116,9 +129,50 @@ const { title } = siteConfig;
       return hits.slice(0, 8);
     }
 
-    function render(query) {
+    function itemHtml(it: SearchItem, snippet: string) {
+      var tags = (it.tags || [])
+        .slice(0, 3)
+        .map(function (t) {
+          return '#' + esc(t);
+        })
+        .join('　');
+      return (
+        '<a href="' +
+        it.url +
+        '" class="block rounded-xl px-3 py-2.5 transition-colors hover:bg-primary/10">' +
+        '<div class="flex items-center justify-between gap-3">' +
+        '<span class="truncate text-sm font-bold">' +
+        esc(it.title) +
+        '</span>' +
+        '<span class="shrink-0 text-[10px] text-primary/80">' +
+        esc(it.category) +
+        '</span>' +
+        '</div>' +
+        (snippet
+          ? '<div class="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">' +
+            esc(snippet) +
+            '</div>'
+          : '') +
+        (tags ? '<div class="mt-1 text-[10px] text-muted/80">' + tags + '</div>' : '') +
+        '</a>'
+      );
+    }
+
+    /** 键盘导航高亮：循环选择并滚动到可视区 */
+    function setActive(i: number) {
+      const links = [...results.querySelectorAll('a')];
+      if (links.length === 0) {
+        activeIdx = -1;
+        return;
+      }
+      activeIdx = ((i % links.length) + links.length) % links.length;
+      links.forEach((a, j) => a.classList.toggle('search-active', j === activeIdx));
+      links[activeIdx].scrollIntoView({ block: 'nearest' });
+    }
+
+    function render(query: string) {
       if (!query.trim()) {
-        var all = (index || []).slice(0, 8);
+        var all = (index as SearchItem[] | null ?? []).slice(0, 8);
         results.innerHTML =
           '<div class="px-3 py-2 text-[11px] text-muted">✧ ' +
           (all.length ? '全部文章' : '暂无文章') +
@@ -128,9 +182,10 @@ const { title } = siteConfig;
               return itemHtml(it, it.description);
             })
             .join('');
+        setActive(0);
         return;
       }
-      var hits = search(index || [], query);
+      var hits = search(index as SearchItem[] ?? [], query);
       results.innerHTML = hits.length
         ? hits
             .map(function (h) {
@@ -140,54 +195,34 @@ const { title } = siteConfig;
         : '<div class="px-4 py-10 text-center text-sm text-muted">（＞﹏＜）没有找到「' +
           esc(query) +
           '」相关的文章…换个关键词试试？</div>';
-    }
-
-    function itemHtml(it, snippet) {
-      var tags = (it.tags || [])
-        .slice(0, 3)
-        .map(function (t) {
-          return '#' + esc(t);
-        })
-        .join('　');
-      return (
-        '<a href="' + it.url + '" class="block rounded-xl px-3 py-2.5 transition-colors hover:bg-primary/10">' +
-        '<div class="flex items-center justify-between gap-3">' +
-        '<span class="truncate text-sm font-bold">' + esc(it.title) + '</span>' +
-        '<span class="shrink-0 text-[10px] text-primary/80">' + esc(it.category) + '</span>' +
-        '</div>' +
-        (snippet ? '<div class="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">' + esc(snippet) + '</div>' : '') +
-        (tags ? '<div class="mt-1 text-[10px] text-muted/80">' + tags + '</div>' : '') +
-        '</a>'
-      );
+      setActive(0);
     }
 
     function open() {
-      modal.classList.remove('hidden');
+      modal!.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
-      input.value = '';
+      input!.value = '';
       render('');
       loadIndex().then(function () {
-        if (input.value === '') render(input.value);
+        if (input!.value === '') render(input!.value);
       });
       setTimeout(function () {
-        input.focus();
+        input!.focus();
       }, 50);
     }
 
     function close() {
-      modal.classList.add('hidden');
+      modal!.classList.add('hidden');
       document.body.style.overflow = '';
     }
 
     document.addEventListener('click', function (e) {
-      var t =
-        e.target instanceof Element
-          ? e.target.closest('.search-trigger')
-          : null;
+      const t =
+        e.target instanceof Element ? e.target.closest('.search-trigger') : null;
       if (t) open();
     });
-    document.getElementById('search-close').addEventListener('click', close);
-    modal.querySelector('.search-mask').addEventListener('click', close);
+    document.getElementById('search-close')!.addEventListener('click', close);
+    modal.querySelector('.search-mask')!.addEventListener('click', close);
 
     // 点击结果链接：先关弹窗再由 Astro 路由导航（弹窗是 transition:persist
     // 持久元素，不主动关闭会原样盖在换页后的新页面上，看起来像没跳转）
@@ -197,21 +232,42 @@ const { title } = siteConfig;
     // 兜底：任何视图过渡换页完成后都收起弹窗（避免持久化残留遮挡）
     document.addEventListener('astro:after-swap', close);
 
-    var debounce = 0;
     input.addEventListener('input', function () {
       clearTimeout(debounce);
-      debounce = setTimeout(function () {
-        render(input.value);
+      debounce = window.setTimeout(function () {
+        render(input!.value);
       }, 120);
     });
 
+    // 键盘导航：↑/↓ 选择、Enter 打开（与鼠标点击一致走视图过渡）
+    input.addEventListener('keydown', function (e) {
+      if (modal!.classList.contains('hidden')) return;
+      const links = [...results.querySelectorAll('a')];
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActive(activeIdx < 0 ? 0 : activeIdx + 1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActive(activeIdx < 0 ? links.length - 1 : activeIdx - 1);
+      } else if (e.key === 'Enter' && activeIdx >= 0 && links[activeIdx]) {
+        e.preventDefault();
+        const href = links[activeIdx].getAttribute('href') || '/';
+        close();
+        try {
+          navigate(href);
+        } catch {
+          location.href = href;
+        }
+      }
+    });
+
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+      if (e.key === 'Escape' && !modal!.classList.contains('hidden')) {
         close();
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        modal.classList.contains('hidden') ? open() : close();
-      } else if (e.key === '/' && modal.classList.contains('hidden')) {
+        modal!.classList.contains('hidden') ? open() : close();
+      } else if (e.key === '/' && modal!.classList.contains('hidden')) {
         var tag = (document.activeElement && document.activeElement.tagName) || '';
         if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
           e.preventDefault();
@@ -219,5 +275,5 @@ const { title } = siteConfig;
         }
       }
     });
-  })();
+  }
 </script>

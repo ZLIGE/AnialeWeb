@@ -1,0 +1,52 @@
+---
+/**
+ * 文章图片灯箱：点击 .prose-anime 内的图片全屏查看，点击任意处 / Esc 关闭。
+ * 事件委托挂在 document 上，跨视图过渡持续生效；正文内图片有 zoom-in 光标
+ * （见 global.css）。包裹链接的图片不拦截（保持链接行为）。
+ */
+---
+
+<div
+  id="lightbox"
+  class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+>
+  <img class="max-h-[90vh] max-w-[92vw] rounded-xl shadow-2xl" alt="" />
+</div>
+
+<script is:inline data-astro-rerun>
+  (function () {
+    var box = document.getElementById('lightbox');
+    if (!box || box.dataset.lightboxBound) return;
+    box.dataset.lightboxBound = '1';
+    var img = box.querySelector('img');
+
+    function open(src, alt) {
+      img.src = src;
+      img.alt = alt || '';
+      box.classList.remove('hidden');
+      box.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+    function close() {
+      box.classList.add('hidden');
+      box.classList.remove('flex');
+      document.body.style.overflow = '';
+      img.src = '';
+    }
+
+    document.addEventListener('click', function (e) {
+      if (!box.classList.contains('hidden')) {
+        close(); // 灯箱开着：点击任意处关闭
+        return;
+      }
+      var t = e.target instanceof Element ? e.target.closest('.prose-anime img') : null;
+      if (t && !t.closest('a')) {
+        e.preventDefault();
+        open(t.currentSrc || t.src, t.alt);
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !box.classList.contains('hidden')) close();
+    });
+  })();
+</script>
