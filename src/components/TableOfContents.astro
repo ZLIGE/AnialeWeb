@@ -315,11 +315,11 @@ for (const h of flat) {
       currentId = headingEls[headingEls.length - 1].id;
     }
     let activeLink: HTMLAnchorElement | null = null;
-    tocLinks.forEach((l) => {
+    for (const l of tocLinks) {
       const active = decodeURIComponent(l.hash.slice(1)) === currentId;
       l.classList.toggle('toc-active', active);
       if (active) activeLink = l;
-    });
+    }
 
     // 滑动指示条：每个可见的目录树各一根，逐段步进滑向当前行
     document.querySelectorAll<HTMLElement>('.toc-tree').forEach((tree) => {

@@ -5,6 +5,7 @@ import type { APIContext } from 'astro';
 import { siteConfig } from '../config';
 
 export async function GET(context: APIContext) {
+  const site = context.site ?? new URL('https://example.com/');
   const posts = (await getCollection('posts', ({ data }) => !data.draft)).sort(
     (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
   );
@@ -36,12 +37,12 @@ export async function GET(context: APIContext) {
     const t = (p.data.updated ?? p.data.published).valueOf();
     return t > latest ? t : latest;
   }, 0);
-  const feedUrl = new URL('rss.xml', context.site).href;
+  const feedUrl = new URL('rss.xml', site).href;
 
   return rss({
     title: siteConfig.title,
     description: siteConfig.description,
-    site: context.site,
+    site,
     items,
     // 浏览器直接打开 /rss.xml 时渲染为美化订阅页（阅读器不受影响）
     stylesheet: '/rss.xsl',

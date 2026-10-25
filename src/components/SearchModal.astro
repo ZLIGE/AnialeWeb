@@ -44,15 +44,28 @@ const { title } = siteConfig;
 <script>
   import { navigate } from 'astro:transitions/client';
 
+  interface SearchItem {
+    url: string;
+    title: string;
+    description: string;
+    category: string;
+    tags: string[];
+    text: string;
+  }
+
   const modal = document.getElementById('search-modal');
   const input = document.getElementById('search-input');
   const results = document.getElementById('search-results');
   if (modal && input && results && !modal.dataset.searchBound) {
-    modal.dataset.searchBound = '1';
+    // 守卫后的非空引用（闭包内不依赖控制流收窄）
+    const modalEl = modal;
+    const inputEl = input as HTMLInputElement;
+    const resultsEl = results;
+    modalEl.dataset.searchBound = '1';
 
-    var index: unknown = null; // 懒加载缓存
-    var debounce = 0;
-    var activeIdx = -1; // 键盘导航当前选中项
+    let index: SearchItem[] | null = null; // 懒加载缓存
+    let debounce = 0;
+    let activeIdx = -1; // 键盘导航当前选中项
 
     function esc(s: string) {
       return String(s).replace(
@@ -63,20 +76,11 @@ const { title } = siteConfig;
     }
 
     function loadIndex(): Promise<SearchItem[]> {
-      if (index) return Promise.resolve(index as SearchItem[]);
+      if (index) return Promise.resolve(index);
       return fetch('/search-index.json')
         .then((r) => r.json())
-        .then((data) => ((index = data), data as SearchItem[]))
+        .then((data: SearchItem[]) => ((index = data), data))
         .catch(() => ((index = []), [] as SearchItem[]));
-    }
-
-    interface SearchItem {
-      url: string;
-      title: string;
-      description: string;
-      category: string;
-      tags: string[];
-      text: string;
     }
 
     /** 多关键词 AND 匹配：标题 > 标签 > 分类 > 摘要 > 正文 */
@@ -160,7 +164,7 @@ const { title } = siteConfig;
 
     /** 键盘导航高亮：循环选择并滚动到可视区 */
     function setActive(i: number) {
-      const links = [...results.querySelectorAll('a')];
+      const links = [...resultsEl.querySelectorAll('a')];
       if (links.length === 0) {
         activeIdx = -1;
         return;
@@ -172,8 +176,8 @@ const { title } = siteConfig;
 
     function render(query: string) {
       if (!query.trim()) {
-        var all = (index as SearchItem[] | null ?? []).slice(0, 8);
-        results.innerHTML =
+        const all = (index ?? []).slice(0, 8);
+        resultsEl.innerHTML =
           '<div class="px-3 py-2 text-[11px] text-muted">✧ ' +
           (all.length ? '全部文章' : '暂无文章') +
           '</div>' +
@@ -185,8 +189,8 @@ const { title } = siteConfig;
         setActive(0);
         return;
       }
-      var hits = search(index as SearchItem[] ?? [], query);
-      results.innerHTML = hits.length
+      const hits = search(index ?? [], query);
+      resultsEl.innerHTML = hits.length
         ? hits
             .map(function (h) {
               return itemHtml(h.item, h.snippet);
@@ -199,20 +203,20 @@ const { title } = siteConfig;
     }
 
     function open() {
-      modal!.classList.remove('hidden');
+      modalEl.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
-      input!.value = '';
+      inputEl.value = '';
       render('');
       loadIndex().then(function () {
-        if (input!.value === '') render(input!.value);
+        if (inputEl.value === '') render(inputEl.value);
       });
       setTimeout(function () {
-        input!.focus();
+        inputEl.focus();
       }, 50);
     }
 
     function close() {
-      modal!.classList.add('hidden');
+      modalEl.classList.add('hidden');
       document.body.style.overflow = '';
     }
 
@@ -222,27 +226,27 @@ const { title } = siteConfig;
       if (t) open();
     });
     document.getElementById('search-close')!.addEventListener('click', close);
-    modal.querySelector('.search-mask')!.addEventListener('click', close);
+    modalEl.querySelector('.search-mask')!.addEventListener('click', close);
 
     // 点击结果链接：先关弹窗再由 Astro 路由导航（弹窗是 transition:persist
     // 持久元素，不主动关闭会原样盖在换页后的新页面上，看起来像没跳转）
-    results.addEventListener('click', function (e) {
+    resultsEl.addEventListener('click', function (e) {
       if (e.target instanceof Element && e.target.closest('a')) close();
     });
     // 兜底：任何视图过渡换页完成后都收起弹窗（避免持久化残留遮挡）
     document.addEventListener('astro:after-swap', close);
 
-    input.addEventListener('input', function () {
+    inputEl.addEventListener('input', function () {
       clearTimeout(debounce);
       debounce = window.setTimeout(function () {
-        render(input!.value);
+        render(inputEl.value);
       }, 120);
     });
 
     // 键盘导航：↑/↓ 选择、Enter 打开（与鼠标点击一致走视图过渡）
-    input.addEventListener('keydown', function (e) {
-      if (modal!.classList.contains('hidden')) return;
-      const links = [...results.querySelectorAll('a')];
+    inputEl.addEventListener('keydown', function (e) {
+      if (modalEl.classList.contains('hidden')) return;
+      const links = [...resultsEl.querySelectorAll('a')];
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setActive(activeIdx < 0 ? 0 : activeIdx + 1);
@@ -262,12 +266,12 @@ const { title } = siteConfig;
     });
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && !modal!.classList.contains('hidden')) {
+      if (e.key === 'Escape' && !modalEl.classList.contains('hidden')) {
         close();
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        modal!.classList.contains('hidden') ? open() : close();
-      } else if (e.key === '/' && modal!.classList.contains('hidden')) {
+        modalEl.classList.contains('hidden') ? open() : close();
+      } else if (e.key === '/' && modalEl.classList.contains('hidden')) {
         var tag = (document.activeElement && document.activeElement.tagName) || '';
         if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
           e.preventDefault();

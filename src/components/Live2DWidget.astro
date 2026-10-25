@@ -75,8 +75,12 @@
         // 记录创建前已存在的 body 子元素，用于识别看板娘生成的节点
         const known = new Set([...document.body.children]);
 
-        createWidget({
-          model: live2d.models.map(({ path, scale }) => ({ path, scale })),
+        // tips/scale 为运行时支持但类型定义未覆盖的能力，断言补齐
+        const options = {
+          model: live2d.models.map((m) => ({
+            path: m.path,
+            scale: (m as { scale?: number }).scale,
+          })),
           position:
             live2d.dockedPosition === 'left' ? 'bottom-left' : 'bottom-right',
           size: 400,
@@ -84,7 +88,8 @@
           tips: {
             typing: { param: 'PARAM_MOUTH_OPEN_Y', speed: 100 },
           },
-        });
+        } as Parameters<typeof createWidget>[0];
+        createWidget(options);
 
         // 组件生成的所有固定定位元素移入持久宿主（换页不被清除）
         [...document.body.children]
