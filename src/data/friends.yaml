@@ -1,5 +1,6 @@
 # 友情链接数据 —— 想被收录的朋友可以这样提交（PagesCMS 后台「友情链接」可直接编辑）
 # name 站点名称；avatar 头像图片地址（不填显示首字母占位头像）；link 站点地址
+# status: closed —— 对方站点关站/失联时添加该字段：卡片置灰、链接不可点、显示「已熄灭」
 items:
   - order: 1
     name: Fuwari
@@ -13,3 +14,4 @@ items:
     name: 示例的小站
     link: https://example.com
     description: 这里是友链描述的示例，替换成你朋友们的站点吧！
+    status: closed

@@ -84,6 +84,8 @@ const friends = defineCollection({
         avatar: z.string().optional(),
         link: z.string(),
         description: z.string(),
+        /** 关闭状态：对方站点关站/失联时置 closed——卡片置灰、链接不可点、显示「已熄灭」标记 */
+        status: z.literal('closed').optional(),
       }),
     ),
   }),

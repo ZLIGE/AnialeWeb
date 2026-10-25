@@ -8,6 +8,7 @@ import { siteConfig } from '../config';
 // 数据来自 src/data/friends.yaml（PagesCMS 后台可编辑），按 order 排序
 const friendsEntry = (await getCollection('friends'))[0];
 const friends = (friendsEntry?.data.items ?? []).slice().sort((a, b) => a.order - b.order);
+const closedCount = friends.filter((f) => f.status === 'closed').length;
 
 /** 友链占位头像：取名字首字符 + 渐变底 */
 const initialOf = (name: string) => [...name][0] ?? '❀';
@@ -15,51 +16,82 @@ const initialOf = (name: string) => [...name][0] ?? '❀';
 
 <BaseLayout title="友情链接" description="朋友们的小星球" hero>
   <Fragment slot="hero">
-    <PageBanner title="友情链接" sub={`${friends.length} 位朋友`} />
+    <PageBanner
+      title="友情链接"
+      sub={closedCount > 0
+        ? `${friends.length} 位朋友 · ${closedCount} 颗星球已熄灭`
+        : `${friends.length} 位朋友`}
+    />
   </Fragment>
   <div class="flex flex-col gap-5">
     <h1 class="page-heading card px-5 py-3.5 text-lg font-bold">
       ✧ 友情链接
       <span class="ml-1.5 text-sm font-normal text-muted"
-        >（{friends.length} 颗星球）</span
+        >（{friends.length - closedCount} 颗星球
+        {closedCount > 0 && ` · ${closedCount} 颗已熄灭`}）</span
       >
     </h1>
 
     <div class="grid gap-4 sm:grid-cols-2">
       {
-        friends.map((f) => (
-          <a
-            href={f.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="card lift group flex items-center gap-4 p-5"
-          >
-            {f.avatar ? (
-              <img
-                src={f.avatar}
-                alt={`${f.name} 的头像`}
-                class="size-14 shrink-0 rounded-2xl border border-line object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <span class="text-gradient flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-2xl font-bold">
-                {initialOf(f.name)}
-              </span>
-            )}
-            <span class="min-w-0 flex-1">
-              <span class="flex items-center gap-1 font-bold transition-colors group-hover:text-primary">
-                {f.name}
-                <Icon
-                  name="external"
-                  class="size-3.5 text-muted opacity-0 transition-opacity group-hover:opacity-100"
+        friends.map((f) => {
+          // 已关闭的友链：置灰、不可点击，保留位置作纪念
+          const closed = f.status === 'closed';
+          const inner = (
+            <>
+              {f.avatar ? (
+                <img
+                  src={f.avatar}
+                  alt={`${f.name} 的头像`}
+                  class:list={[
+                    'size-14 shrink-0 rounded-2xl border border-line object-cover',
+                    closed && 'grayscale',
+                  ]}
+                  loading="lazy"
                 />
+              ) : (
+                <span
+                  class:list={[
+                    'text-gradient flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-2xl font-bold',
+                    closed && 'grayscale opacity-60',
+                  ]}
+                >
+                  {initialOf(f.name)}
+                </span>
+              )}
+              <span class="min-w-0 flex-1">
+                <span class="flex items-center gap-1 font-bold transition-colors group-hover:text-primary">
+                  {f.name}
+                  {closed ? (
+                    <span class="inline-flex items-center gap-1 rounded-full bg-black/8 px-2 py-0.5 text-[10px] font-medium text-muted dark:bg-white/10">
+                      已熄灭
+                    </span>
+                  ) : (
+                    <Icon
+                      name="external"
+                      class="size-3.5 text-muted opacity-0 transition-opacity group-hover:opacity-100"
+                    />
+                  )}
+                </span>
+                <span class="mt-0.5 block truncate text-sm text-muted">
+                  {closed ? `（原 ${f.description}）` : f.description}
+                </span>
               </span>
-              <span class="mt-0.5 block truncate text-sm text-muted">
-                {f.description}
-              </span>
-            </span>
-          </a>
-        ))
+            </>
+          );
+          return closed ? (
+            <div class="card flex items-center gap-4 p-5 opacity-60">{inner}</div>
+          ) : (
+            <a
+              href={f.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="card lift group flex items-center gap-4 p-5"
+            >
+              {inner}
+            </a>
+          );
+        })
       }
     </div>
 

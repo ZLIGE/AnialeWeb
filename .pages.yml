@@ -89,3 +89,10 @@ content:
           - { name: link, label: 站点地址, type: string }
           - { name: avatar, label: 头像图片, type: image, required: false }
           - { name: description, label: 一句话简介, type: text }
+          - name: status
+            label: 状态
+            type: string
+            required: false
+            options:
+              - { label: 正常, value: '' }
+              - { label: 已关闭（置灰不可点）, value: closed }
