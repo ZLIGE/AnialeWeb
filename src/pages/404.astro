@@ -5,11 +5,13 @@
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageBanner from '../components/PageBanner.astro';
+import { siteConfig } from '../config';
 
+// 友链模块关闭时不给「友链」捷径（避免指向被改写为 404 的页面）
 const shortcuts = [
   { text: '追番录', href: '/anime' },
   { text: '作品集', href: '/projects' },
-  { text: '友链', href: '/friends' },
+  ...(siteConfig.friendLinks.enabled ? [{ text: '友链', href: '/friends' }] : []),
   { text: '标签', href: '/tags' },
 ];
 ---

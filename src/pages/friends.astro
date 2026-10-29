@@ -5,6 +5,12 @@ import Icon from '../components/Icon.astro';
 import { getCollection } from 'astro:content';
 import { siteConfig } from '../config';
 
+// 友链模块开关关闭时：整页改写为 404（构建产物存在但展示 404 内容，
+// 友链数据保留不动，重新打开开关即恢复）
+if (!siteConfig.friendLinks.enabled) {
+  return Astro.rewrite('/404');
+}
+
 // 数据来自 src/data/friends.yaml（PagesCMS 后台可编辑），按 order 排序
 const friendsEntry = (await getCollection('friends'))[0];
 const friends = (friendsEntry?.data.items ?? []).slice().sort((a, b) => a.order - b.order);

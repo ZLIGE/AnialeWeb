@@ -14,6 +14,9 @@ export interface SocialItem {
   url: string;
 }
 
+/** 友链模块总开关：false 时导航去掉「友链」、/friends 改写为 404（数据保留） */
+const FRIEND_LINKS_ENABLED = true;
+
 export const siteConfig = {
   /** 站点名称（浏览器标题、侧栏、页脚都会用到） */
   title: 'Ashen',
@@ -56,14 +59,19 @@ export const siteConfig = {
     ],
   },
 
-  /** 导航栏（顺序即显示顺序） */
+  /** 友链功能模块：关闭后导航去掉「友链」入口，/friends 页面改写为 404（友链数据保留不动） */
+  friendLinks: {
+    enabled: FRIEND_LINKS_ENABLED,
+  },
+
+  /** 导航栏（顺序即显示顺序；「友链」项随 friendLinks.enabled 自动显隐） */
   nav: [
     { text: '首页', link: '/', icon: 'home' },
     { text: '关于我', link: '/about', icon: 'user' },
     { text: '作品集', link: '/projects', icon: 'code' },
     { text: '追番录', link: '/anime', icon: 'tv' },
     { text: '归档', link: '/archive', icon: 'folder' },
-    { text: '友链', link: '/friends', icon: 'users' },
+    ...(FRIEND_LINKS_ENABLED ? [{ text: '友链', link: '/friends', icon: 'users' }] : []),
     { text: '标签', link: '/tags', icon: 'tag' },
   ] as NavItem[],
 
