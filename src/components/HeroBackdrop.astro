@@ -188,7 +188,7 @@ const images = hero.images;
   function initWallpaper() {
     const backdrop = document.querySelector('.hero-backdrop');
     if (!backdrop) return;
-    const imgs = backdrop.querySelectorAll('img[data-hero-img]');
+    const imgs = backdrop.querySelectorAll<HTMLElement>('img[data-hero-img]');
     if (imgs.length === 0) return;
 
     let cur = parseInt(sessionStorage.getItem('hero-img') ?? '', 10);
