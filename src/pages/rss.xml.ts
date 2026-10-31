@@ -44,8 +44,6 @@ export async function GET(context: APIContext) {
     description: siteConfig.description,
     site,
     items,
-    // 浏览器直接打开 /rss.xml 时渲染为美化订阅页（阅读器不受影响）
-    stylesheet: '/rss.xsl',
     xmlns: {
       content: 'http://purl.org/rss/1.0/modules/content/',
       atom: 'http://www.w3.org/2005/Atom',

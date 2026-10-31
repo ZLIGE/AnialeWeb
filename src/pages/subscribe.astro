@@ -1,0 +1,113 @@
+---
+/**
+ * RSS 订阅引导页：浏览器里打开订阅入口时看到的人性化页面。
+ * /rss.xml 本身保持纯 XML（供阅读器抓取）——浏览器厂商已宣布弃用 XSLT，
+ * 原先的 rss.xsl 美化方案迁移为本页（真 Astro 页面，无任何弃用技术）。
+ * 主题色与明暗模式由 BaseLayout 的设置恢复脚本自动同步（读 localStorage）。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import { getSortedPosts } from '../utils/posts';
+import { siteConfig } from '../config';
+
+const posts = (await getSortedPosts())
+  .filter((p) => !p.data.draft)
+  .slice(0, 10);
+const feedUrl = new URL('rss.xml', Astro.site).href;
+const fmt = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+    d.getDate(),
+  ).padStart(2, '0')}`;
+---
+
+<BaseLayout title={`订阅 ${siteConfig.title}`} description={`通过 RSS 订阅 ${siteConfig.title} 的文章更新`}>
+  <div class="mx-auto flex max-w-2xl flex-col gap-5 px-4 pb-16">
+    <section class="card p-6 text-center sm:p-8">
+      <h1 class="flex items-center justify-center gap-2 text-xl font-bold">
+        <Icon name="rss" class="size-5 text-primary" />
+        订阅 {siteConfig.title}
+      </h1>
+      <p class="mt-2 text-sm leading-relaxed text-muted">
+        {siteConfig.description}
+      </p>
+      <p class="mt-3 text-sm leading-relaxed text-muted">
+        把下面的订阅地址添加到任意 RSS
+        阅读器，文章发布时就能第一时间收到更新 ✧
+      </p>
+      <p class="mt-4 flex flex-wrap items-center justify-center gap-2">
+        <code
+          class="rounded-lg bg-primary/8 px-3 py-1.5 text-xs font-bold text-primary"
+        >
+          {feedUrl}
+        </code>
+        <button
+          type="button"
+          class="flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-deep"
+          data-copy-feed
+          data-feed-url={feedUrl}
+        >
+          <Icon name="copy" class="size-3.5" />
+          复制订阅链接
+        </button>
+      </p>
+    </section>
+
+    <p class="text-center text-sm text-muted">
+      最近文章（共 {posts.length} 篇，阅读器里可收到全部更新）
+    </p>
+
+    <div class="flex flex-col gap-4">
+      {
+        posts.map((post) => (
+          <section class="card p-5">
+            <h2 class="text-base font-bold leading-snug">
+              <a
+                href={`/posts/${post.id}/`}
+                class="transition-colors hover:text-primary"
+              >
+                {post.data.title}
+              </a>
+            </h2>
+            <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted">
+              <span>{siteConfig.author}</span>
+              <span>{fmt(post.data.published)}</span>
+              <span class="font-medium text-primary">📂 {post.data.category}</span>
+              {post.data.tags.slice(0, 3).map((t) => (
+                <span class="rounded-full bg-primary/10 px-2 py-0.5 text-primary">
+                  #{t}
+                </span>
+              ))}
+            </div>
+            {post.data.description && (
+              <p class="mt-2 text-sm leading-relaxed text-muted">
+                {post.data.description}
+              </p>
+            )}
+          </section>
+        ))
+      }
+    </div>
+
+    <p class="text-center text-xs text-muted">
+      ✧ 使用任意 RSS 阅读器订阅上方地址即可 ✧
+    </p>
+  </div>
+</BaseLayout>
+
+<script is:inline data-astro-rerun>
+  (function () {
+    var btn = document.querySelector('[data-copy-feed]');
+    if (!btn || btn.dataset.copyBound) return;
+    btn.dataset.copyBound = '1';
+    btn.addEventListener('click', function () {
+      var url = btn.getAttribute('data-feed-url') || '';
+      if (!url || !navigator.clipboard || !navigator.clipboard.writeText) return;
+      navigator.clipboard.writeText(url).then(function () {
+        btn.textContent = '✓ 已复制';
+        setTimeout(function () {
+          btn.textContent = '复制订阅链接';
+        }, 2000);
+      });
+    });
+  })();
+</script>

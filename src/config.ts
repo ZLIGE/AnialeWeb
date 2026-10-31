@@ -79,7 +79,7 @@ export const siteConfig = {
   social: [
     { name: 'GitHub', icon: 'github', url: 'https://github.com/ZLIGE/AnialeWeb' },
     { name: '邮箱', icon: 'mail', url: 'mailto:hi@example.com' },
-    { name: 'RSS 订阅', icon: 'rss', url: '/rss.xml' },
+    { name: 'RSS 订阅', icon: 'rss', url: '/subscribe' },
   ] as SocialItem[],
 
   /** 页脚起始年份 */
