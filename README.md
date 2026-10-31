@@ -107,17 +107,19 @@ passwordHint: 提示文案（可选，展示在解锁卡片上）
 
 ### 5. 更新追番录 / 作品集 / 友链
 
-分别编辑 `src/data/anime.ts`、`src/data/projects.ts`、`src/data/friends.ts`，
-每个字段都有中文注释，增删条目即可。
+分别编辑 `src/data/anime.yaml`、`src/data/projects.yaml`、`src/data/friends.yaml`，
+每个字段都有中文注释，增删条目即可；也可以在 Pages CMS 后台（app.pagescms.org）
+直接编辑这三个文件。
 
 ### 6. 看板娘
 
 看板娘形态在 `src/config.ts` → `effects.companion` 切换：
 
-- **`'elaina'`**（默认）：单图活立绘，图为 `public/images/elaina.webp`。
-  替换成任意透明底全身立绘即可；点击有台词气泡，长按可拖动并记忆位置。
-- **`'live2d'`**：Live2D 模型（oh-my-live2d 驱动），`live2d.models` 里把 `path`
-  换成任意 Cubism 2/5 模型的 json 地址。
+- **`'live2d'`**（默认）：Live2D 模型（l2d-widget 驱动），`live2d.models` 里把 `path`
+  换成任意 Cubism 2/5 模型的 json 地址。按住模型可直接拖动换位置（记忆），
+  轻点是互动；点击看板娘菜单可休息、隐藏。
+- **`'elaina'`**：单图活立绘，图为 `public/images/elaina.webp`。
+  替换成任意透明底全身立绘即可；点击有台词气泡，按住可拖动并记忆位置。
 - **`'none'`**：关闭看板娘。
 
 ### 7. 调整主题色

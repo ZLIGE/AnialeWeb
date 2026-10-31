@@ -18,6 +18,11 @@ export async function GET(context: APIContext) {
     if (!post.data.password) {
       const { Content } = await render(post);
       contentHtml = await container.renderToString(Content);
+      // 正文里的相对图片/链接改为绝对地址（阅读器没有站点上下文，相对路径会裂图）
+      const origin = site.origin;
+      contentHtml = contentHtml
+        .replaceAll('src="/', `src="${origin}/`)
+        .replaceAll('href="/', `href="${origin}/`);
     }
     items.push({
       title: post.data.title,

@@ -53,6 +53,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="author" content={siteConfig.author} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- SVG 不被 Safari 支持：PNG 回退 + iOS 主屏图标 -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="alternate" type="application/rss+xml" title={siteConfig.title} href="/rss.xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 

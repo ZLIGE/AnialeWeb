@@ -130,7 +130,7 @@ export const siteConfig = {
   },
 
   /**
-   * Live2D 看板娘设置（effects.companion 为 'live2d' 时生效，oh-my-live2d 驱动）。
+   * Live2D 看板娘设置（effects.companion 为 'live2d' 时生效，l2d-widget 驱动）。
    * 可用 psd2live 等工具从分层 PSD 生成 .moc3 模型后接入，或换任意
    * Cubism 2/5 模型的 json 地址。
    */
